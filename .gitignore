@@ -1,0 +1,11 @@
+*~
+*.o
+*.a
+*.so
+*.elf
+*.exe
+*.sprx
+*.pyc
+aerolib.csv
+.gdb_history
+
