@@ -1,0 +1,5 @@
+{
+	"cmake.configureEnvironment": {
+		"CMAKE_TOOLCHAIN_FILE": "${env:PS4_PAYLOAD_SDK}/toolchain/orbis.cmake"
+	}
+}

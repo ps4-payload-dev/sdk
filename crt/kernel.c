@@ -638,7 +638,7 @@ kernel_patch(unsigned long addr, const void* before, const void* after,
   }
 
   // before does not match current, wrong offset?
-  if(memcmp(before, current, size)) {
+  if(before && memcmp(before, current, size)) {
     return -1;
   }
 

@@ -104,21 +104,9 @@ static int g_nb_handles = 0;
 /**
  * external dependencies.
  **/
-static void* (*malloc)(unsigned long) = 0;
-static void  (*free)(void*) = 0;
 static void* (*memcpy)(void*, const void*, unsigned long) = 0;
-static char* (*strdup)(const char*) = 0;
-static char* (*strcat)(char*, const char*) = 0;
-static char* (*strcpy)(char*, const char*) = 0;
 static int   (*strcmp)(const char*, const char*) = 0;
-static int   (*strncmp)(const char*, const char*, unsigned long) = 0;
-static int   (*strlen)(const char*) = 0;
 static int   (*sprintf)(char*, const char*, ...) = 0;
-static char* (*getcwd)(char*, unsigned long) = 0;
-static int   (*sceKernelLoadStartModule)(const char*, unsigned long, const void*,
-					 unsigned int, void*, int*) = 0;
-static int   (*sceKernelStopUnloadModule)(int, unsigned long, const void*, unsigned int,
-					  const void*, void*) = 0;
 
 
 /**
@@ -136,6 +124,34 @@ klog_resolve_error(const char *name) {
 static void
 klog_libload_error(const char *name) {
   klog_printf("Unable to load the library '%s'\n", name);
+}
+
+
+static int
+sprx_find_file(const char *name, char* path) {
+  char buf[0x1000];
+
+  sprintf(path, "/system/priv/lib/%s", name);
+  if(!__syscall(SYS_stat, path, buf)) {
+    return 0;
+  }
+
+  sprintf(path, "/system/common/lib/%s", name);
+  if(!__syscall(SYS_stat, path, buf)) {
+    return 0;
+  }
+
+  sprintf(path, "/system_ex/priv_ex/lib/%s", name);
+  if(!__syscall(SYS_stat, path, buf)) {
+    return 0;
+  }
+
+  sprintf(path, "/system_ex/common_ex/lib/%s", name);
+  if(!__syscall(SYS_stat, path, buf)) {
+    return 0;
+  }
+
+  return -1;
 }
 
 
@@ -164,6 +180,7 @@ sprx_dlsym(const char* symname) {
 static unsigned int
 sprx_open(const char* libname) {
   unsigned int handle;
+  char path[1024];
 
   if(!strcmp(libname, "libkernel.sprx") ||
      !strcmp(libname, "libkernel_web.sprx") ||
@@ -175,7 +192,11 @@ sprx_open(const char* libname) {
     return 0x2;
   }
 
-  if(!DYNLIB_LOAD(libname, &handle)) {
+  if(sprx_find_file(libname, path)) {
+    return 0;
+  }
+
+  if(!DYNLIB_LOAD(path, &handle)) {
     return handle;
   }
   
@@ -390,58 +411,16 @@ __rtld_init(void) {
     return -1;
   }
 
-  if((err=DYNLIB_DLSYM(0x2, "malloc", &malloc))) {
-    klog_resolve_error("malloc");
-    return err;
-  }
-  if((err=DYNLIB_DLSYM(0x2, "free", &free))) {
-    klog_resolve_error("free");
-    return err;
-  }
   if((err=DYNLIB_DLSYM(0x2, "memcpy", &memcpy))) {
     klog_resolve_error("memcpy");
-    return err;
-  }
-  if((err=DYNLIB_DLSYM(0x2, "strdup", &strdup))) {
-    klog_resolve_error("strdup");
-    return err;
-  }
-  if((err=DYNLIB_DLSYM(0x2, "strcat", &strcat))) {
-    klog_resolve_error("strcat");
-    return err;
-  }
-  if((err=DYNLIB_DLSYM(0x2, "strcpy", &strcpy))) {
-    klog_resolve_error("strcpy");
     return err;
   }
   if((err=DYNLIB_DLSYM(0x2, "strcmp", &strcmp))) {
     klog_resolve_error("strcmp");
     return err;
   }
-  if((err=DYNLIB_DLSYM(0x2, "strncmp", &strncmp))) {
-    klog_resolve_error("strncmp");
-    return err;
-  }
-  if((err=DYNLIB_DLSYM(0x2, "strlen", &strlen))) {
-    klog_resolve_error("strlen");
-    return err;
-  }
   if((err=DYNLIB_DLSYM(0x2, "sprintf", &sprintf))) {
     klog_resolve_error("sprintf");
-    return err;
-  }
-  if((err=DYNLIB_DLSYM(0x2, "getcwd", &getcwd))) {
-    klog_resolve_error("getcwd");
-    return err;
-  }
-  if((err=DYNLIB_DLSYM(g_libkernel_handle, "sceKernelLoadStartModule",
-		       &sceKernelLoadStartModule))) {
-    klog_resolve_error("sceKernelLoadStartModule");
-    return err;
-  }
-  if((err=DYNLIB_DLSYM(g_libkernel_handle, "sceKernelStopUnloadModule",
-		       &sceKernelStopUnloadModule))) {
-    klog_resolve_error("sceKernelStopUnloadModule");
     return err;
   }
 

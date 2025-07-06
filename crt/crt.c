@@ -47,7 +47,7 @@ payload_terminate(int status) {
   void (*_exit)(int) = 0;
 
   // we are running inside a hijacked process, just return
-  if(DYNLIB_DLSYM(0x2001, "_exit", &_exit)) {
+  if(!DYNLIB_DLSYM(0x2001, "_exit", &_exit)) {
     return status;
   }
 
