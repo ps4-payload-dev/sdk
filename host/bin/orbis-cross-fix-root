@@ -20,7 +20,7 @@ SCRIPT_NAME="$(basename "${SCRIPT_PATH}")"
 SCRIPT_DIR="$(dirname "${SCRIPT_PATH}")"
 
 PS4_PAYLOAD_SDK="$(realpath "${SCRIPT_DIR}/..")"
-source "${PS4_PAYLOAD_SDK}/toolchain/prospero.sh"
+source "${PS4_PAYLOAD_SDK}/toolchain/orbis.sh"
 
 if [[ -z $1 ]]; then
     WORKDIR="${PS4_SYSROOT}/${PS4_HBROOT}"
