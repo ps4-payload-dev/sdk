@@ -29,6 +29,7 @@ extern const intptr_t KERNEL_ADDRESS_TARGETID;
 extern const intptr_t KERNEL_ADDRESS_QA_FLAGS;
 
 uint32_t kernel_get_fw_version(void);
+ssize_t  kernel_get_image_size(void);
 
 int32_t  kernel_copyin(const void *udaddr, intptr_t kaddr, size_t len);
 int32_t  kernel_copyout(intptr_t kaddr, void *udaddr, size_t  len);
@@ -43,6 +44,7 @@ uint32_t kernel_getint(intptr_t addr);
 uint16_t kernel_getshort(intptr_t addr);
 uint8_t  kernel_getchar(intptr_t addr);
 
+intptr_t kernel_find_pattern(intptr_t addr, uint32_t len, const char* pattern);
 int kernel_patch(intptr_t addr, const void* before, const void* after,
 		 uint16_t size);
 

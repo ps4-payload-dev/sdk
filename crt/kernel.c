@@ -47,6 +47,47 @@ struct kexec_args {
 
 
 /**
+ * Context used by kexec_find_pattern().
+ **/
+typedef struct kexec_find_pattern_ctx {
+  unsigned long kaddr;
+  unsigned int kaddr_len;
+  char pattern[0x100];
+  unsigned long *res;
+} kexec_find_pattern_ctx_t;
+
+
+typedef struct {
+  unsigned char e_ident[16];
+  unsigned short e_type;
+  unsigned short e_machine;
+  unsigned int e_version;
+  unsigned long e_entry;
+  unsigned long e_phoff;
+  unsigned long e_shoff;
+  unsigned int e_flags;
+  unsigned short e_ehsize;
+  unsigned short e_phentsize;
+  unsigned short e_phnum;
+  unsigned short e_shentsize;
+  unsigned short e_shnum;
+  unsigned short e_shstrndx;
+} Elf64_Ehdr;
+
+
+typedef struct {
+  unsigned int p_type;
+  unsigned int p_flags;
+  unsigned long p_offset;
+  unsigned long p_vaddr;
+  unsigned long p_paddr;
+  unsigned long p_filesz;
+  unsigned long p_memsz;
+  unsigned long p_align;
+} Elf64_Phdr;
+
+
+/**
  * Public constants.
  **/
 unsigned long KERNEL_ADDRESS_IMAGE_BASE = 0; // derived by crt
@@ -77,6 +118,113 @@ const unsigned long KERNEL_OFFSET_UCRED_CR_SCEATTRS  = 0x83;
 const unsigned long KERNEL_OFFSET_FILEDESC_FD_CDIR = 0x10;
 const unsigned long KERNEL_OFFSET_FILEDESC_FD_RDIR = 0x18;
 const unsigned long KERNEL_OFFSET_FILEDESC_FD_JDIR = 0x20;
+
+
+static int
+memcmp(const unsigned char* dst, const unsigned char* src, unsigned long len) {
+  for(unsigned long i=0; i<len; i++) {
+    if(dst[i] != src[i]) {
+      return src[i] - dst[i];
+    }
+  }
+  return 0;
+}
+
+
+/**
+ * Convert a hexchar to a nibble (half byte).
+ **/
+static inline __attribute__((always_inline)) short
+hex2nib(char hexchar) {
+  if(hexchar >= '0' && hexchar <= '9') {
+    return hexchar - '0';
+  }
+
+  if(hexchar >= 'A' && hexchar <= 'F') {
+    return hexchar - 'A' + 10;
+  }
+
+  if(hexchar >= 'a' && hexchar <= 'f') {
+    return hexchar - 'a' + 10;
+  }
+
+  return -1;
+}
+
+
+/**
+ * Check if a byte value matches a hexstring.
+ **/
+static inline __attribute__((always_inline)) short
+byte_match(unsigned char bval, const char* hexstr) {
+  short nib;
+
+  if(!hexstr[0] || hexstr[0] == '?') {
+    return 1;
+  }
+
+  if((nib=hex2nib(hexstr[0])) < 0) {
+    return -1;
+  }
+
+  if(nib != (bval >> 4)) {
+    return -1;
+  }
+
+  if(!hexstr[1] || hexstr[1] == '?') {
+    return 1;
+  }
+
+  if((nib=hex2nib(hexstr[1])) < 0) {
+    return -1;
+  }
+
+  if(nib != (bval & 0xf)) {
+    return -1;
+  }
+
+  return 1;
+}
+
+
+/**
+ * Check if a memory region matches a hexstring.
+ **/
+static inline __attribute__((always_inline)) int
+pattern_match(const unsigned char* addr, unsigned int len, const char* hexstr) {
+  while(len && *hexstr) {
+    if(byte_match(*addr, hexstr) < 0) {
+      return -1;
+    }
+
+    hexstr++;
+    addr++;
+    len--;
+
+    if(*hexstr) {
+      hexstr++;
+    }
+  }
+
+  return 1;
+}
+
+
+/**
+ * Scan a memory region for a pattern encoded by the given hexstring.
+ **/
+static inline __attribute__((always_inline)) const unsigned char*
+pattern_scan(const unsigned char* addr, unsigned int len, const char* hexstr) {
+  for(unsigned int i=0; i<len; i++) {
+    if(pattern_match(addr+i, len-i, hexstr) < 0) {
+      continue;
+    }
+
+    return addr+i;
+  }
+
+  return 0;
+}
 
 
 /**
@@ -188,6 +336,29 @@ kexec_copyout(struct thread *td, struct kexec_args* args) {
 }
 
 
+/**
+ * Find a pattern in kernel memory (must be invoked from kernel space).
+ **/
+static int
+kexec_find_pattern(struct thread *td, struct kexec_args* args) {
+  int (*copyin)(const void*, void*, unsigned long) = (void*)args->arg1;
+  int (*copyout)(const void*, void*, unsigned long) = (void*)args->arg2;
+  void* uctx = (void*)args->arg3;
+  kexec_find_pattern_ctx_t ctx;
+  unsigned long res;
+  int err;
+
+  if((err=copyin(uctx, &ctx, sizeof(ctx)))) {
+    return err;
+  }
+
+  ctx.pattern[sizeof(ctx.pattern)-1] = 0;
+  res = (long)pattern_scan((void*)ctx.kaddr, ctx.kaddr_len, ctx.pattern);
+
+  return copyout(&res, ctx.res, sizeof(res));
+}
+
+
 unsigned int
 kernel_get_fw_version(void) {
   int mib[2] = {1, 38};
@@ -199,6 +370,42 @@ kernel_get_fw_version(void) {
   }
 
   return version;
+}
+
+
+long
+kernel_get_image_size(void) {
+  unsigned long min_vaddr = -1;
+  unsigned long max_vaddr = 0;
+  Elf64_Ehdr ehdr;
+  Elf64_Phdr phdr;
+
+  if(kernel_copyout(KERNEL_ADDRESS_IMAGE_BASE, &ehdr, sizeof(ehdr))) {
+    return -1;
+  }
+
+  if(ehdr.e_ident[0] != 0x7f || ehdr.e_ident[1] != 'E' ||
+     ehdr.e_ident[2] != 'L'  || ehdr.e_ident[3] != 'F') {
+    return -1;
+  }
+
+  // Compute size of virtual memory region.
+  for(int i=0; i<ehdr.e_phnum; i++) {
+    if(kernel_copyout(KERNEL_ADDRESS_IMAGE_BASE + ehdr.e_phoff + i*sizeof(Elf64_Phdr),
+		      &phdr, sizeof(phdr))) {
+      return -1;
+    }
+
+    if(phdr.p_vaddr < min_vaddr) {
+      min_vaddr = phdr.p_vaddr;
+    }
+
+    if(max_vaddr < phdr.p_vaddr + phdr.p_memsz) {
+      max_vaddr = phdr.p_vaddr + phdr.p_memsz;
+    }
+  }
+
+  return sizeof(ehdr) + ehdr.e_phnum*sizeof(phdr) + max_vaddr - min_vaddr;
 }
 
 
@@ -611,14 +818,38 @@ kernel_getchar(unsigned long addr) {
 }
 
 
-static int
-memcmp(const unsigned char* dst, const unsigned char* src, unsigned long len) {
-  for(unsigned long i=0; i<len; i++) {
-    if(dst[i] != src[i]) {
-      return src[i] - dst[i];
+unsigned long
+kernel_find_pattern(unsigned long addr, unsigned int len, const char* pattern) {
+  kexec_find_pattern_ctx_t ctx;
+  unsigned long res = 0;
+  int pattern_len = -1;
+
+  if(!addr || !len || !pattern) {
+    return 0;
+  }
+
+  ctx.kaddr = addr;
+  ctx.kaddr_len = len;
+  ctx.res = &res;
+
+  for(int i=0; i<sizeof(ctx.pattern); i++) {
+    ctx.pattern[i] = pattern[i];
+    if(!pattern[i]) {
+      pattern_len = i;
+      break;
     }
   }
-  return 0;
+
+  if(pattern_len < 0 || pattern_len >= sizeof(ctx.pattern)-1) {
+    return 0;
+  }
+
+  if(kexec(kexec_find_pattern, KERNEL_ADDRESS_COPYIN, KERNEL_ADDRESS_COPYOUT,
+	   &ctx)) {
+    return 0;
+  }
+
+  return res;
 }
 
 

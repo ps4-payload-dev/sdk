@@ -21,46 +21,6 @@ along with this program; see the file COPYING. If not, see
 #include <ps4/kernel.h>
 
 
-static ssize_t
-kernel_get_image_size(void) {
-  size_t min_vaddr = -1;
-  size_t max_vaddr = 0;
-  Elf64_Ehdr ehdr;
-  Elf64_Phdr phdr;
-
-  // copy out ELF header from kernel
-  if(kernel_copyout(KERNEL_ADDRESS_IMAGE_BASE, &ehdr, sizeof(ehdr))) {
-    perror("kernel_copyout");
-    return -1;
-  }
-
-  if(ehdr.e_ident[0] != 0x7f || ehdr.e_ident[1] != 'E' ||
-     ehdr.e_ident[2] != 'L'  || ehdr.e_ident[3] != 'F') {
-    puts("not an ELF file");
-    return -1;
-  }
-
-  // Compute size of virtual memory region.
-  for(int i=0; i<ehdr.e_phnum; i++) {
-    if(kernel_copyout(KERNEL_ADDRESS_IMAGE_BASE + ehdr.e_phoff + i*sizeof(Elf64_Phdr),
-		      &phdr, sizeof(phdr))) {
-      perror("kernel_copyout");
-      return -1;
-    }
-
-    if(phdr.p_vaddr < min_vaddr) {
-      min_vaddr = phdr.p_vaddr;
-    }
-
-    if(max_vaddr < phdr.p_vaddr + phdr.p_memsz) {
-      max_vaddr = phdr.p_vaddr + phdr.p_memsz;
-    }
-  }
-
-  return sizeof(ehdr) + ehdr.e_phnum*sizeof(phdr) + max_vaddr - min_vaddr;
-}
-
-
 int
 main() {
   uint8_t buf[0x4000];
