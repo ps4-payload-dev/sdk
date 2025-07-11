@@ -21,6 +21,8 @@ along with this program; see the file COPYING. If not, see
 
 __BEGIN_DECLS
 
+extern const size_t KERNEL_IMAGE_SIZE;
+
 extern const intptr_t KERNEL_ADDRESS_IMAGE_BASE;
 extern const intptr_t KERNEL_ADDRESS_ALLPROC;
 extern const intptr_t KERNEL_ADDRESS_PRISON0;

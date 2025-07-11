@@ -23,6 +23,7 @@ along with this program; see the file COPYING. If not, see
  **/
 #define X86_CR0_WP (1 << 16)
 #define MSR_LSTAR  0xC0000082
+#define EFAULT     14
 #define EINVAL     22
 
 
@@ -90,6 +91,8 @@ typedef struct {
 /**
  * Public constants.
  **/
+unsigned long KERNEL_IMAGE_SIZE = 0;
+
 unsigned long KERNEL_ADDRESS_IMAGE_BASE = 0; // derived by crt
 unsigned long KERNEL_ADDRESS_ALLPROC    = 0; // derived by crt
 unsigned long KERNEL_ADDRESS_ROOTVNODE  = 0; // derived by crt
@@ -275,6 +278,43 @@ kexec_get_msr(struct thread *td, struct kexec_args* args) {
 }
 
 
+
+
+/**
+ *
+ **/
+static int
+kexec_get_image_size(struct thread *td, struct kexec_args* args) {
+  const unsigned char* img = (const unsigned char*)args->arg1;
+  unsigned long* res = (unsigned long*)args->arg2;
+  const Elf64_Ehdr* ehdr = (const Elf64_Ehdr*)img;
+  const Elf64_Phdr* phdr = (const Elf64_Phdr*)(img + ehdr->e_phoff);
+  unsigned long min_vaddr = -1;
+  unsigned long max_vaddr = 0;
+
+  if(!img || !res) {
+    return EFAULT;
+  }
+
+  if(ehdr->e_ident[0] != 0x7f || ehdr->e_ident[1] != 'E' ||
+     ehdr->e_ident[2] != 'L'  || ehdr->e_ident[3] != 'F') {
+    return EINVAL;
+  }
+
+  for(int i=0; i<ehdr->e_phnum; i++) {
+    if(phdr[i].p_vaddr < min_vaddr) {
+      min_vaddr = phdr[i].p_vaddr;
+    }
+
+    if(max_vaddr < phdr[i].p_vaddr + phdr[i].p_memsz) {
+      max_vaddr = phdr[i].p_vaddr + phdr[i].p_memsz;
+    }
+  }
+
+  *res = sizeof(ehdr) + ehdr->e_phnum*sizeof(phdr) + max_vaddr - min_vaddr;
+
+  return 0;
+}
 /**
  * Get the address of the invoking kernel thread (must be invoked from kernel space).
  **/
@@ -290,6 +330,7 @@ kexec_get_thread(struct thread *td, struct kexec_args* args) {
 
   return 0;
 }
+
 
 
 /**
@@ -683,6 +724,12 @@ __kernel_init(void) {
 
   default:
     return -1;
+  }
+
+  // get the size of the kernel image
+  if((err=kexec(kexec_get_image_size, KERNEL_ADDRESS_IMAGE_BASE,
+		&KERNEL_IMAGE_SIZE))) {
+    return err;
   }
 
   // get the kernel address pointing at the current thread
