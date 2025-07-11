@@ -37,20 +37,20 @@ struct thread;
 /**
  * Arguments passed to the kexec syscall.
  **/
-struct kexec_args {
+typedef struct kexec_args {
   int (*fn)(struct thread*, struct kexec_args*);
   long arg1;
   long arg2;
   long arg3;
   long arg4;
   long arg5;
-};
+} kexec_args_t;
 
 
 /**
  * Context used by kexec_find_pattern().
  **/
-typedef struct kexec_find_pattern_ctx {
+typedef struct {
   unsigned long kaddr;
   unsigned int kaddr_len;
   char pattern[0x100];
@@ -58,6 +58,9 @@ typedef struct kexec_find_pattern_ctx {
 } kexec_find_pattern_ctx_t;
 
 
+/**
+ * Data structure for the ELF header.
+ **/
 typedef struct {
   unsigned char e_ident[16];
   unsigned short e_type;
@@ -76,6 +79,9 @@ typedef struct {
 } Elf64_Ehdr;
 
 
+/**
+ * Data structure for the ELF program header.
+ **/
 typedef struct {
   unsigned int p_type;
   unsigned int p_flags;
@@ -234,7 +240,7 @@ pattern_scan(const unsigned char* addr, unsigned int len, const char* hexstr) {
  * Invoke the given function from kernel space.
  **/
 int
-kexec(int (*fn)(struct thread*, struct kexec_args*), ...) {
+kexec(int (*fn)(struct thread*, kexec_args_t*), ...) {
   long a1 = 0, a2 = 0, a3 = 0, a4 = 0, a5 = 0;
   __builtin_va_list ap;
   int err;
@@ -259,7 +265,7 @@ kexec(int (*fn)(struct thread*, struct kexec_args*), ...) {
  * Get a model specific register value (must be invoked from kernel space).
  **/
 static int
-kexec_get_msr(struct thread *td, struct kexec_args* args) {
+kexec_get_msr(struct thread *td, kexec_args_t* args) {
   unsigned int reg = (unsigned int)args->arg1;
   unsigned long* val = (unsigned long*)args->arg2;
   unsigned int edx;
@@ -284,7 +290,7 @@ kexec_get_msr(struct thread *td, struct kexec_args* args) {
  *
  **/
 static int
-kexec_get_image_size(struct thread *td, struct kexec_args* args) {
+kexec_get_image_size(struct thread *td, kexec_args_t* args) {
   const unsigned char* img = (const unsigned char*)args->arg1;
   unsigned long* res = (unsigned long*)args->arg2;
   const Elf64_Ehdr* ehdr = (const Elf64_Ehdr*)img;
@@ -319,7 +325,7 @@ kexec_get_image_size(struct thread *td, struct kexec_args* args) {
  * Get the address of the invoking kernel thread (must be invoked from kernel space).
  **/
 static int
-kexec_get_thread(struct thread *td, struct kexec_args* args) {
+kexec_get_thread(struct thread *td, kexec_args_t* args) {
   unsigned long* addr = (unsigned long*)args->arg1;
 
   if(!addr) {
@@ -337,7 +343,7 @@ kexec_get_thread(struct thread *td, struct kexec_args* args) {
  * Copy data from user space into kernel space (must be invoked from kernel space).
  **/
 static int
-kexec_copyin(struct thread *td, struct kexec_args* args) {
+kexec_copyin(struct thread *td, kexec_args_t* args) {
   int (*copyin)(const void*, void*, unsigned long) = (void*)args->arg1;
   const void* uaddr = (void*)args->arg2;
   void *kaddr = (void*)args->arg3;
@@ -367,7 +373,7 @@ kexec_copyin(struct thread *td, struct kexec_args* args) {
  * Copy data from kernel space into user space (must be invoked from kernel space).
  **/
 static int
-kexec_copyout(struct thread *td, struct kexec_args* args) {
+kexec_copyout(struct thread *td, kexec_args_t* args) {
   int (*copyout)(const void*, void*, unsigned long) = (void*)args->arg1;
   const void *kaddr = (void*)args->arg2;
   void* uaddr = (void*)args->arg3;
@@ -381,7 +387,7 @@ kexec_copyout(struct thread *td, struct kexec_args* args) {
  * Find a pattern in kernel memory (must be invoked from kernel space).
  **/
 static int
-kexec_find_pattern(struct thread *td, struct kexec_args* args) {
+kexec_find_pattern(struct thread *td, kexec_args_t* args) {
   int (*copyin)(const void*, void*, unsigned long) = (void*)args->arg1;
   int (*copyout)(const void*, void*, unsigned long) = (void*)args->arg2;
   void* uctx = (void*)args->arg3;
@@ -411,42 +417,6 @@ kernel_get_fw_version(void) {
   }
 
   return version;
-}
-
-
-long
-kernel_get_image_size(void) {
-  unsigned long min_vaddr = -1;
-  unsigned long max_vaddr = 0;
-  Elf64_Ehdr ehdr;
-  Elf64_Phdr phdr;
-
-  if(kernel_copyout(KERNEL_ADDRESS_IMAGE_BASE, &ehdr, sizeof(ehdr))) {
-    return -1;
-  }
-
-  if(ehdr.e_ident[0] != 0x7f || ehdr.e_ident[1] != 'E' ||
-     ehdr.e_ident[2] != 'L'  || ehdr.e_ident[3] != 'F') {
-    return -1;
-  }
-
-  // Compute size of virtual memory region.
-  for(int i=0; i<ehdr.e_phnum; i++) {
-    if(kernel_copyout(KERNEL_ADDRESS_IMAGE_BASE + ehdr.e_phoff + i*sizeof(Elf64_Phdr),
-		      &phdr, sizeof(phdr))) {
-      return -1;
-    }
-
-    if(phdr.p_vaddr < min_vaddr) {
-      min_vaddr = phdr.p_vaddr;
-    }
-
-    if(max_vaddr < phdr.p_vaddr + phdr.p_memsz) {
-      max_vaddr = phdr.p_vaddr + phdr.p_memsz;
-    }
-  }
-
-  return sizeof(ehdr) + ehdr.e_phnum*sizeof(phdr) + max_vaddr - min_vaddr;
 }
 
 
