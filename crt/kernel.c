@@ -288,6 +288,34 @@ kexec_get_msr(struct thread *td, kexec_args_t* args) {
 }
 
 
+/**
+ * Scan for the kernel image base address. This approach works for firmwares
+ * 5.00-12.52. Earlier versions store the image at the start of a different page
+ * table.
+ *
+ * TODO: search for ELF magic in other page tables.
+ **/
+static int
+kexec_find_image_base(struct thread *td, kexec_args_t* args) {
+  unsigned long* res = (unsigned long*)args->arg1;
+  unsigned long base;
+  unsigned int edx;
+  unsigned int eax;
+
+  if(!res) {
+    return EFAULT;
+  }
+
+  asm volatile(".att_syntax\n"
+	       "rdmsr" : "=d"(edx), "=a"(eax) : "c"(MSR_LSTAR));
+
+  base = (((unsigned long)edx) << 32) | (unsigned long)eax;
+  base &= 0xFFFFFFFFFFFFC000;
+
+  *res = base;
+
+  return 0;
+}
 
 
 /**
@@ -325,6 +353,89 @@ kexec_get_image_size(struct thread *td, kexec_args_t* args) {
 
   return 0;
 }
+
+
+/**
+ * Search for the entry to the kernel copyin function.
+ **/
+static int
+kexec_find_copyin(struct thread *td, kexec_args_t* args) {
+  char pattern[] = "554889e54989fa4901d24939e2??174989ea4983c2104c39d77d0b4889f"
+                   "f4889d6e8????????65488b0425200000004c8b05????????4c8980d000"
+                   "0000";
+  const unsigned char* img = (const unsigned char*)args->arg1;
+  unsigned long img_size = (unsigned long)args->arg2;
+  unsigned long* res = (unsigned long*)args->arg3;
+
+  if(!img || !res) {
+    return EFAULT;
+  }
+
+  if(!img_size) {
+    return EINVAL;
+  }
+
+  *res = (long)pattern_scan(img, img_size, pattern);
+
+  return 0;
+}
+
+
+/**
+ * Search for the entry to the kernel copyout function.
+ **/
+static int
+kexec_find_copyout(struct thread *td, kexec_args_t* args) {
+  char pattern[] = "554889e565488b0425200000004c8b05????????4c8980d00000004885d"
+                   "274??65488b0c2500000000488b4108488b88????????48f7c100000040";
+  const unsigned char* img = (const unsigned char*)args->arg1;
+  unsigned long img_size = (unsigned long)args->arg2;
+  unsigned long* res = (unsigned long*)args->arg3;
+
+  if(!img || !res) {
+    return EFAULT;
+  }
+
+  if(!img_size) {
+    return EINVAL;
+  }
+
+  *res = (long)pattern_scan(img, img_size, pattern);
+
+  return 0;
+}
+
+
+/**
+ * Search for the global kernel variable targetid.
+ *
+ * TODO: add pattern scanning for targetid.
+ **/
+static int
+kexec_find_targetid(struct thread *td, kexec_args_t* args) {
+  char pattern[] = "488d0d????????31c0807934000f95c0";
+  const unsigned char* img = (const unsigned char*)args->arg1;
+  unsigned long img_size = (unsigned long)args->arg2;
+  unsigned long* res = (unsigned long*)args->arg3;
+
+  if(!img || !res) {
+    return EFAULT;
+  }
+
+  if(!img_size) {
+    return EINVAL;
+  }
+
+  if(0) {
+    *res = (long)pattern_scan(img, img_size, pattern);
+  } else {
+    *res = 0;
+  }
+
+  return 0;
+}
+
+
 /**
  * Get the address of the invoking kernel thread (must be invoked from kernel space).
  **/
@@ -701,7 +812,36 @@ __kernel_init(void) {
     break;
 
   default:
-    return -1;
+    if(fw < 0x12500000) {
+      return -ENOSYS;
+    }
+
+    if((err=kexec(kexec_find_image_base, &KERNEL_ADDRESS_IMAGE_BASE))) {
+      return err;
+    }
+    if((err=kexec(kexec_get_image_size, KERNEL_ADDRESS_IMAGE_BASE,
+		  &KERNEL_IMAGE_SIZE))) {
+      return err;
+    }
+    if((err=kexec(kexec_find_copyin, KERNEL_ADDRESS_IMAGE_BASE,
+		  KERNEL_IMAGE_SIZE, &KERNEL_ADDRESS_COPYIN))) {
+      return err;
+    }
+    if((err=kexec(kexec_find_copyout, KERNEL_ADDRESS_IMAGE_BASE,
+		  KERNEL_IMAGE_SIZE, &KERNEL_ADDRESS_COPYOUT))) {
+      return err;
+    }
+    if((err=kexec(kexec_find_targetid, KERNEL_ADDRESS_IMAGE_BASE,
+		  KERNEL_IMAGE_SIZE, &KERNEL_ADDRESS_TARGETID))) {
+      return err;
+    }
+
+    if(!KERNEL_ADDRESS_IMAGE_BASE || !KERNEL_IMAGE_SIZE ||
+       !KERNEL_ADDRESS_COPYIN || !KERNEL_ADDRESS_COPYOUT ||
+       !KERNEL_ADDRESS_TARGETID) {
+      return -ENOSYS;
+    }
+    break;
   }
 
   // get the size of the kernel image
