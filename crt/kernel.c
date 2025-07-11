@@ -99,14 +99,14 @@ typedef struct {
  **/
 unsigned long KERNEL_IMAGE_SIZE = 0;
 
-unsigned long KERNEL_ADDRESS_IMAGE_BASE = 0; // derived by crt
-unsigned long KERNEL_ADDRESS_ALLPROC    = 0; // derived by crt
-unsigned long KERNEL_ADDRESS_ROOTVNODE  = 0; // derived by crt
-unsigned long KERNEL_ADDRESS_PRISON0    = 0; // derived by crt
-unsigned long KERNEL_ADDRESS_TARGETID   = 0; // needed by crt
-unsigned long KERNEL_ADDRESS_QA_FLAGS   = 0; // derived by crt
-unsigned long KERNEL_ADDRESS_COPYIN     = 0; // needed by crt
-unsigned long KERNEL_ADDRESS_COPYOUT    = 0; // needed by crt
+unsigned long KERNEL_ADDRESS_IMAGE_BASE = 0;
+unsigned long KERNEL_ADDRESS_ALLPROC    = 0;
+unsigned long KERNEL_ADDRESS_ROOTVNODE  = 0;
+unsigned long KERNEL_ADDRESS_PRISON0    = 0;
+unsigned long KERNEL_ADDRESS_TARGETID   = 0;
+unsigned long KERNEL_ADDRESS_QA_FLAGS   = 0;
+unsigned long KERNEL_ADDRESS_COPYIN     = 0;
+unsigned long KERNEL_ADDRESS_COPYOUT    = 0;
 
 const unsigned long KERNEL_OFFSET_PROC_P_UCRED   = 0x40;
 const unsigned long KERNEL_OFFSET_PROC_P_FD      = 0x48;
@@ -129,6 +129,9 @@ const unsigned long KERNEL_OFFSET_FILEDESC_FD_RDIR = 0x18;
 const unsigned long KERNEL_OFFSET_FILEDESC_FD_JDIR = 0x20;
 
 
+/**
+ * Compare memory areas.
+ **/
 static int
 memcmp(const unsigned char* dst, const unsigned char* src, unsigned long len) {
   for(unsigned long i=0; i<len; i++) {
