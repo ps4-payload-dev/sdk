@@ -31,7 +31,6 @@ extern const intptr_t KERNEL_ADDRESS_TARGETID;
 extern const intptr_t KERNEL_ADDRESS_QA_FLAGS;
 
 uint32_t kernel_get_fw_version(void);
-ssize_t  kernel_get_image_size(void);
 
 int32_t  kernel_copyin(const void *udaddr, intptr_t kaddr, size_t len);
 int32_t  kernel_copyout(intptr_t kaddr, void *udaddr, size_t  len);
