@@ -25,6 +25,7 @@ along with this program; see the file COPYING. If not, see
 #define MSR_LSTAR  0xC0000082
 #define EFAULT     14
 #define EINVAL     22
+#define ENOSYS     78
 
 
 /**
@@ -290,7 +291,7 @@ kexec_get_msr(struct thread *td, kexec_args_t* args) {
 
 
 /**
- *
+ * Get the size of the kernel image.
  **/
 static int
 kexec_get_image_size(struct thread *td, kexec_args_t* args) {
@@ -339,7 +340,6 @@ kexec_get_thread(struct thread *td, kexec_args_t* args) {
 
   return 0;
 }
-
 
 
 /**
@@ -425,17 +425,22 @@ kernel_get_fw_version(void) {
 
 int
 __kernel_init(void) {
+  unsigned int fw = kernel_get_fw_version();
   unsigned long lstar = 0;
   unsigned long addr = 0;
   unsigned long prev = 0;
   int pid;
   int err;
 
+  if(fw < 0x3500000) {
+    return -ENOSYS;
+  }
+
   if((err=kexec(kexec_get_msr, MSR_LSTAR, &lstar))) {
     return err;
   }
 
-  switch(kernel_get_fw_version() & 0xffff0000) {
+  switch(fw & 0xffff0000) {
   case 0x3500000:
     KERNEL_ADDRESS_IMAGE_BASE = lstar - 0x003A1AD0;
     KERNEL_ADDRESS_TARGETID   = KERNEL_ADDRESS_IMAGE_BASE + 0x019A121D;
