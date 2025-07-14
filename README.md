@@ -71,13 +71,13 @@ firmware version. Currently, offsets for the following versions are included
 - [ ] 8.50 and 8.52
 - [x] 9.00
 - [ ] 9.03 and 9.04
-- [ ] 9.50, 9.51, and 9.60
+- [x] 9.50, 9.51, and 9.60
 - [ ] 10.00 and 10.01
-- [ ] 10.50, 10.70 and 10.71
+- [x] 10.50, 10.70 and 10.71
 - [x] 11.00
-- [ ] 11.02
-- [ ] 11.50 and 11.52
-- [ ] 12.00 and 12.02
+- [x] 11.02
+- [x] 11.50 and 11.52
+- [x] 12.00 and 12.02
 - [ ] 12.50
 
 Please help confirming untested versions by sending a pull request that updates README.md
