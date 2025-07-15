@@ -37,5 +37,5 @@ clean:
 	-rm -f *.o *.elf
 
 test: $(PAYLOAD)
-	$(PS4_DEPLOY) -h $(PS4_HOST) -p $(PS4_PORT) $^
+	echo "$(USER)" | $(PS4_DEPLOY) -i -h $(PS4_HOST) -p $(PS4_PORT) $^
 

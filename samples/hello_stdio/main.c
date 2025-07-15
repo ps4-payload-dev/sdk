@@ -19,7 +19,13 @@ along with this program; see the file COPYING. If not, see
 
 int
 main() {
-  puts("Hello, world!");
+  char buf[255] = "anonymous";
+
+  fprintf(stdout, "enter name\n");
+  fflush(stdout);
+
+  fgets(buf, sizeof(buf), stdin);
+  fprintf(stdout, "Hello, %s", buf);
 
   return 0;
 }
