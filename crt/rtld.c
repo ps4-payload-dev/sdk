@@ -399,7 +399,10 @@ rtld_load(unsigned char* image_start, Elf64_Dyn* dyn) {
 
 int
 __rtld_init(void) {
-  int err;
+  unsigned long jaildir;
+  unsigned long rootdir;
+  unsigned long prison;
+  int err = 0;
   long l;
 
   if(!DYNLIB_DLSYM(0x1, "getpid", &l)) {
@@ -424,5 +427,45 @@ __rtld_init(void) {
     return err;
   }
 
-  return rtld_load(__image_start, _DYNAMIC);
+  if(!(prison=kernel_get_ucred_prison(-1))) {
+    klog_puts("kernel_get_ucred_prison failed");
+    return -1;
+  }
+  if(!(rootdir=kernel_get_proc_rootdir(-1))) {
+    klog_puts("kernel_get_proc_rootdir failed");
+    return -1;
+  }
+  if(!(jaildir=kernel_get_proc_jaildir(-1))) {
+    klog_puts("kernel_get_proc_jaildir failed");
+    return -1;
+  }
+
+  if((err=kernel_set_proc_rootdir(-1, KERNEL_ADDRESS_ROOTVNODE))) {
+    klog_puts("kernel_set_proc_rootdir failed");
+
+  } else if((err=kernel_set_proc_jaildir(-1, KERNEL_ADDRESS_ROOTVNODE))) {
+    klog_puts("kernel_set_proc_jaildir failed");
+
+  } else if((err=kernel_set_ucred_prison(-1, KERNEL_ADDRESS_PRISON0))) {
+    klog_puts("kernel_set_proc_rootdir failed");
+  }
+
+  if(!err) {
+    err = rtld_load(__image_start, _DYNAMIC);
+  }
+
+  if(kernel_set_proc_rootdir(-1, rootdir)) {
+    klog_puts("kernel_set_proc_rootdir failed");
+    err = -1;
+  }
+  if(kernel_set_proc_jaildir(-1, jaildir)) {
+    klog_puts("kernel_set_proc_jaildir failed");
+    err = -1;
+  }
+  if(kernel_set_ucred_prison(-1, prison)) {
+    klog_puts("kernel_set_proc_rootdir failed");
+    err = -1;
+  }
+
+  return err;
 }
