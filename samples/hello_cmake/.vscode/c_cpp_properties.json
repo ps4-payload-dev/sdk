@@ -1,0 +1,12 @@
+{
+    "configurations": [
+        {
+            "name": "ps4-payload-sdk",
+            "compilerPath": "${env:PS4_PAYLOAD_SDK}/bin/orbis-clang++",
+            "intelliSenseMode": "clang-x64",
+            "cStandard": "c17",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}
