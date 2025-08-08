@@ -31,6 +31,7 @@ jobs:
     - name: Build SDK
       run: |
         make DESTDIR=${{ runner.tool_cache }}/ps4-payload-sdk install
+        PS4_PAYLOAD_SDK=${{ runner.tool_cache }}/ps4-payload-sdk ./libcxx.sh
         cd ${{ runner.tool_cache }}
         zip -r $GITHUB_WORKSPACE/ps4-payload-sdk.zip ps4-payload-sdk
         cd -
