@@ -66,7 +66,7 @@ firmware version. Currently, offsets for the following versions are included
 - [ ] 6.50 and 6.51
 - [ ] 6.70 to 6.72
 - [x] 7.00
-- [ ] 7.01
+- [x] 7.01
 - [x] 7.02
 - [x] 7.50, 7.51, and 7.55
 - [x] 8.00 to 8.03
