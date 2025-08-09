@@ -59,6 +59,12 @@ $(NID_DB):
 %.o: %.c
 	$(CC) -c $(CFLAGS) -o $@ $^
 
+libdl.so: libkernel_web.o
+	$(LD) -m elf_x86_64 -shared -soname libkernel_web.sprx -o $@ $<
+
+libpthread.so: libkernel_web.o
+	$(LD) -m elf_x86_64 -shared -soname libkernel_web.sprx -o $@ $<
+
 %.so: %.o
 	$(LD) -m elf_x86_64 -shared -soname $*.sprx -o $@ $<
 
