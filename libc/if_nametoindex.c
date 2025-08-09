@@ -68,7 +68,7 @@ if_nametoindex(const char *ifname)
 	struct ifaddrs *ifaddrs, *ifa;
 	unsigned int ni;
 
-	s = _socket(AF_INET, SOCK_DGRAM, 0);
+	s = socket(AF_INET, SOCK_DGRAM, 0);
 	if (s != -1) {
 		strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 		if (_ioctl(s, SIOCGIFINDEX, &ifr) != -1) {
