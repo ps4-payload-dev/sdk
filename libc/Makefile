@@ -35,8 +35,10 @@ CFLAGS += -nobuiltininc -isystem ../include/freebsd-9.3 -isystem ../include
 CFLAGS += -fvisibility-nodllstorageclass=default
 CFLAGS += -O1
 
+ASFLAGS := $(CFLAGS)
+
 SRCS := $(wildcard *.c)
-OBJS := $(SRCS:.c=.o)
+OBJS := $(SRCS:.c=.o) _setjmp.o
 
 ARCHIVE := libc.a
 
