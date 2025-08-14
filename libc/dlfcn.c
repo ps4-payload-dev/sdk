@@ -14,6 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; see the file COPYING. If not, see
 <http://www.gnu.org/licenses/>.  */
 
+#include <errno.h>
 #include <dlfcn.h>
 #include <unistd.h>
 #include <string.h>
@@ -68,6 +69,14 @@ dlclose(void *handle) {
 
   dlerror_str[0] = 0;
   return 0;
+}
+
+
+int
+dladdr(const void *addr, Dl_info *info) {
+#warning dladdr is not implemented
+  errno = ENOTSUP;
+  return -1;
 }
 
 
