@@ -41,6 +41,8 @@ along with this program; see the file COPYING. If not, see
 #include <sys/errno.h>
 
 
+int sceNetInit(void);
+
 int sceNetPoolCreate(const char*, int, int);
 int sceNetPoolDestroy(int);
 
@@ -104,6 +106,10 @@ resolve_ntoa(const char *hostname, in_addr_t *addr) {
   int res_handle = -1;
   int err = 0;
 
+  if(sceNetInit()) {
+    return h_errno;
+  }
+
   if((pool_handle=sceNetPoolCreate("", 0x4000, 0)) < 0) {
     err = h_errno;
 
@@ -139,6 +145,10 @@ resolve_aton(const in_addr_t *addr, char *hostname, size_t size) {
   int pool_handle = -1;
   int res_handle = -1;
   int err = 0;
+
+  if(sceNetInit()) {
+    return h_errno;
+  }
 
   if((pool_handle=sceNetPoolCreate("", 0x4000, 0)) < 0) {
     err = h_errno;
