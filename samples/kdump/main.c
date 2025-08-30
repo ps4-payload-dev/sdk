@@ -24,15 +24,10 @@ along with this program; see the file COPYING. If not, see
 int
 main() {
   uint8_t buf[0x4000];
-  ssize_t imgsize;
   size_t len;
 
-  if((imgsize=kernel_get_image_size()) < 0) {
-    return -1;
-  }
-
-  for(size_t i=0; i<imgsize; i+=sizeof(buf)) {
-    len = imgsize - i;
+  for(size_t i=0; i<KERNEL_IMAGE_SIZE; i+=sizeof(buf)) {
+    len = KERNEL_IMAGE_SIZE - i;
     if(len > sizeof(buf)) {
       len = sizeof(buf);
     }
