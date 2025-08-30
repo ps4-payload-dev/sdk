@@ -78,7 +78,11 @@ typedef	__size_t	size_t;
 
 #ifndef	__cplusplus
 #ifndef _WCHAR_T_DECLARED
+#ifdef __SCE__
+typedef	unsigned short	wchar_t;
+#else
 typedef	___wchar_t	wchar_t;
+#endif
 #define	_WCHAR_T_DECLARED
 #endif
 #endif
@@ -89,8 +93,13 @@ typedef	__wint_t	wint_t;
 #endif
 
 #ifndef	WCHAR_MIN 
+#ifdef __SCE__
+#define	WCHAR_MIN	0
+#define	WCHAR_MAX	0xffff
+#else
 #define	WCHAR_MIN	__INT_MIN
 #define	WCHAR_MAX	__INT_MAX
+#endif
 #endif
 
 #ifndef WEOF
