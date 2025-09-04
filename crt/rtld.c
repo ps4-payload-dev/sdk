@@ -78,15 +78,6 @@ typedef struct {
 } Elf64_Rela;
 
 
-
-typedef struct sysmodtab {
-  const char* name;
-  unsigned int handle;
-} sysmodtab_t;
-
-
-
-
 /**
  * dependencies provided by the ELF linker.
  **/
@@ -108,6 +99,18 @@ static int g_nb_handles = 0;
 static void* (*memcpy)(void*, const void*, unsigned long) = 0;
 static int   (*strcmp)(const char*, const char*) = 0;
 static int   (*sprintf)(char*, const char*, ...) = 0;
+static int   (*sceSysmoduleLoadModuleInternal)(unsigned int) = 0;
+
+
+/**
+ * Lookup table for sceSysmoduleLoadModuleInternal().
+ **/
+static struct sysmodtab {
+  const char* name;
+  unsigned int handle;
+} sysmodtab[] = {
+  {"libSceUserService.sprx", 0x80000011},
+};
 
 
 /**
@@ -195,6 +198,14 @@ sprx_open(const char* libname) {
 
   if(sprx_find_file(libname, path)) {
     return 0;
+  }
+
+  for(int i=0; i<sizeof(sysmodtab)/sizeof(sysmodtab[0]); i++) {
+    if(!strcmp(libname, sysmodtab[i].name)) {
+      if(sceSysmoduleLoadModuleInternal(sysmodtab[i].handle)) {
+	return 0;
+      }
+    }
   }
 
   if(!DYNLIB_LOAD(path, &handle)) {
@@ -400,6 +411,7 @@ rtld_load(unsigned char* image_start, Elf64_Dyn* dyn) {
 
 int
 __rtld_init(void) {
+  unsigned int libSceSysmodule;
   unsigned long jaildir;
   unsigned long rootdir;
   unsigned long prison;
@@ -449,6 +461,16 @@ __rtld_init(void) {
 
   } else if((err=kernel_set_ucred_prison(-1, KERNEL_ADDRESS_PRISON0))) {
     klog_puts("kernel_set_proc_rootdir failed");
+  }
+
+  if(DYNLIB_LOAD("/system/common/lib/libSceSysmodule.sprx", &libSceSysmodule)) {
+    klog_libload_error("/system/common/lib/libSceSysmodule.sprx");
+    return -1;
+  }
+  if(DYNLIB_DLSYM(libSceSysmodule, "sceSysmoduleLoadModuleInternal",
+		   &sceSysmoduleLoadModuleInternal)) {
+    klog_resolve_error("sceSysmoduleLoadModuleInternal");
+    return -1;
   }
 
   if(!err) {
