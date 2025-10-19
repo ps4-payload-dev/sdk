@@ -21,9 +21,6 @@ SCRIPT_DIR="$(dirname "${SCRIPT_PATH}")"
 PS5_PAYLOAD_SDK="$(realpath "${SCRIPT_DIR}/..")"
 PS5_PAYLOAD_HBROOT="${PS5_PAYLOAD_SDK}/target/user/homebrew"
 
-LLVM_CONFIG="${SCRIPT_DIR}/llvm-config"
-LLVM_BINDIR=$("${LLVM_CONFIG}" --bindir)
-
 PIE="-pie"
 for ARG in "$@"; do
     if [[ "$ARG" == "--shared" ]]; then
@@ -31,6 +28,7 @@ for ARG in "$@"; do
     fi
 done
 
+LLVM_BINDIR=$("${SCRIPT_DIR}/llvm-config" --bindir)
 BIN_PATH="${LLVM_BINDIR}/ld.lld"
 exec "${BIN_PATH}" "$@" \
      -m elf_x86_64 $PIE --eh-frame-hdr \
