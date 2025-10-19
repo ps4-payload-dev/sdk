@@ -9,20 +9,33 @@ On Debian-flavored operating systems, you can invoke the following command to
 install dependencies used by the SDK.
 ```console
 john@localhost:ps4-payload-dev/sdk$ sudo apt-get update && sudo apt-get upgrade # optional
-john@localhost:ps4-payload-dev/sdk$ sudo apt-get install bash socat llvm clang lld # required
-john@localhost:ps4-payload-dev/sdk$ sudo apt-get install cmake meson pkg-config # optional
+john@localhost:ps4-payload-dev/sdk$ sudo apt-get install bash clang-18 lld-18 # required
+john@localhost:ps4-payload-dev/sdk$ sudo apt-get install socat cmake meson pkg-config # optional
 ```
 
 If you are using Fedora, you can install dependencies as follows (tested with version 41):
 ```console
-john@localhost:ps4-payload-dev/sdk$ sudo dnf install bash socat llvm-devel clang lld # required
-john@localhost:ps4-payload-dev/sdk$ sudo dnf install cmake meson pkg-config # optional
+john@localhost:ps4-payload-dev/sdk$ sudo dnf install bash llvm-devel clang lld # required
+john@localhost:ps4-payload-dev/sdk$ sudo dnf install socat cmake meson pkg-config # optional
 ```
 
-## Building
+If you are using macOS, you can install them using the [Homebrew Package Manager][macos-brew] (tested with macOS Sequoia):
 ```console
-john@localhost:ps4-payload-dev/sdk$ make DESTDIR=/opt/ps4-payload-sdk install
+john@localhost:ps5-payload-dev/sdk$ brew install llvm@18 # required
+john@localhost:ps5-payload-dev/sdk$ export LLVM_CONFIG=/opt/homebrew/opt/llvm@18/bin/llvm-config # required
+john@localhost:ps5-payload-dev/sdk$ brew install socat cmake meson # optional
 ```
+
+## Quick-start
+You can download a binary distribution of the SDK from [the latest release page][latest-rel],
+then install it to your local storage, e.g,
+```console
+john@localhost:tmp$ wget https://github.com/ps4-payload-dev/sdk/releases/latest/download/ps4-payload-sdk.zip
+john@localhost:tmp$ sudo unzip -d /opt ps4-payload-sdk.zip
+```
+Assuming you have all the prerequisites and you are on a POSIX system,
+the binary distribution should work regardless of CPU architecture, e.g., x86_64, aarch64.
+
 
 ## Usage
 ```console
@@ -30,6 +43,11 @@ john@localhost:ps4-payload-dev/sdk$ export PS4_PAYLOAD_SDK=/opt/ps4-payload-sdk
 john@localhost:ps4-payload-dev/sdk$ make -C samples/hello_stdio
 john@localhost:ps4-payload-dev/sdk$ export PS4_HOST=ps4; export PS4_PORT=9021
 john@localhost:ps4-payload-dev/sdk$ make -C samples/hello_stdio test
+```
+
+## Building the SDK
+```console
+john@localhost:ps4-payload-dev/sdk$ make DESTDIR=/opt/ps4-payload-sdk install
 ```
 
 ## Adding new SCE Libs
@@ -97,3 +115,5 @@ Unless otherwhise explicitly stated inside a file, the rest are licensed under
 the GPLv3+.
 
 [issues]: https://github.com/ps4-payload-dev/sdk/issues/new
+[latest-rel]: https://github.com/ps4-payload-dev/sdk/releases/latest
+[macos-brew]: https://brew.sh
