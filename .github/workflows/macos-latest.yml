@@ -1,0 +1,52 @@
+name: macos-latest
+
+on:
+  push:
+    paths-ignore:
+      - "**/*.md"
+      - "**/*.txt"
+  pull_request:
+    paths-ignore:
+      - "**/*.md"
+      - "**/*.txt"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install prerequisites
+        run: |
+          brew update
+          brew install llvm@18 meson cmake
+
+      - name: Build SDK
+        run: |
+          make install
+          ./libcxx.sh
+        env:
+          LLVM_CONFIG: /opt/homebrew/opt/llvm@18/bin/llvm-config
+          DESTDIR: ${{ runner.tool_cache }}/ps4-payload-sdk
+          PS4_PAYLOAD_SDK: ${{ runner.tool_cache }}/ps4-payload-sdk
+
+      - name: Build samples
+        run: |
+          source $PS4_PAYLOAD_SDK/toolchain/orbis.sh
+          $MAKE -C samples/hello_cxx
+          $MAKE -C samples/hello_dlfcn
+          $MAKE -C samples/hello_sprx
+          $MAKE -C samples/hello_stdio
+          $MAKE -C samples/hello_world
+          $MAKE -C samples/kdump
+          $MAKE -C samples/mntinfo
+          $MAKE -C samples/ps
+          $CMAKE -S samples/hello_cmake -B samples/hello_cmake/build
+          $CMAKE --build samples/hello_cmake/build
+          $MESON setup samples/hello_meson samples/hello_meson/build
+          $MESON compile -C samples/hello_meson/build
+        env:
+          LLVM_CONFIG: /opt/homebrew/opt/llvm@18/bin/llvm-config
+          PS4_PAYLOAD_SDK: ${{ runner.tool_cache }}/ps4-payload-sdk
