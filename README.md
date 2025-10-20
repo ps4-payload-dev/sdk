@@ -21,9 +21,9 @@ john@localhost:ps4-payload-dev/sdk$ sudo dnf install socat cmake meson pkg-confi
 
 If you are using macOS, you can install them using the [Homebrew Package Manager][macos-brew] (tested with macOS Sequoia):
 ```console
-john@localhost:ps5-payload-dev/sdk$ brew install llvm@18 # required
-john@localhost:ps5-payload-dev/sdk$ export LLVM_CONFIG=/opt/homebrew/opt/llvm@18/bin/llvm-config # required
-john@localhost:ps5-payload-dev/sdk$ brew install socat cmake meson # optional
+john@localhost:ps4-payload-dev/sdk$ brew install llvm@18 # required
+john@localhost:ps4-payload-dev/sdk$ export LLVM_CONFIG=/opt/homebrew/opt/llvm@18/bin/llvm-config # required
+john@localhost:ps4-payload-dev/sdk$ brew install socat cmake meson # optional
 ```
 
 ## Quick-start
