@@ -112,6 +112,7 @@ static struct sysmodtab {
   {"libSceNet.sprx", 0x8000001c},
   {"libSceSystemService.sprx", 0x80000010},
   {"libSceUserService.sprx", 0x80000011},
+  {"libSceSystemService.sprx", 0x80000010},
 };
 
 
