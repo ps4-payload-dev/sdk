@@ -109,6 +109,7 @@ static struct sysmodtab {
   const char* name;
   unsigned int handle;
 } sysmodtab[] = {
+  {"libSceNet.sprx", 0x8000001c},
   {"libSceUserService.sprx", 0x80000011},
 };
 
