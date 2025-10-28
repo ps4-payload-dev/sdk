@@ -44,6 +44,7 @@ jobs:
     - name: Build samples
       run: |
         source $PS4_PAYLOAD_SDK/toolchain/orbis.sh
+        $MAKE -C samples/browser
         $MAKE -C samples/hello_cxx
         $MAKE -C samples/hello_dlfcn
         $MAKE -C samples/hello_sprx
