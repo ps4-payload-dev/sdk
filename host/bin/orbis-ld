@@ -22,6 +22,8 @@ PS5_PAYLOAD_SDK="$(realpath "${SCRIPT_DIR}/..")"
 PS5_PAYLOAD_HBROOT="${PS5_PAYLOAD_SDK}/target/user/homebrew"
 
 PIE="-pie"
+LDSCRIPT="-T${PS4_PAYLOAD_SDK}/ldscripts/elf_x86_64.x"
+
 for ARG in "$@"; do
     if [[ "$ARG" == "--shared" ]]; then
 	PIE=""
@@ -29,11 +31,13 @@ for ARG in "$@"; do
     if [[ "$ARG" == "--static" ]]; then
 	PIE=""
     fi
+    if [[ "$ARG" == "--script" || "$ARG" == "-T" ]]; then
+	LDSCRIPT=""
+    fi
 done
 
 LLVM_BINDIR=$("${SCRIPT_DIR}/llvm-config" --bindir)
 BIN_PATH="${LLVM_BINDIR}/ld.lld"
 exec "${BIN_PATH}" "$@" \
-     -m elf_x86_64 $PIE --eh-frame-hdr \
-     -z max-page-size=0x4000 \
-     -dT "${PS5_PAYLOAD_SDK}/ldscripts/elf_x86_64.x" \
+     -m elf_x86_64 $PIE $LDSCRIPT --eh-frame-hdr \
+     -z max-page-size=0x4000
