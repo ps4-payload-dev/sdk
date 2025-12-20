@@ -26,6 +26,9 @@ for ARG in "$@"; do
     if [[ "$ARG" == "--shared" ]]; then
 	PIE=""
     fi
+    if [[ "$ARG" == "--static" ]]; then
+	PIE=""
+    fi
 done
 
 LLVM_BINDIR=$("${SCRIPT_DIR}/llvm-config" --bindir)
