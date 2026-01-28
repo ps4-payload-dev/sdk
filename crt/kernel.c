@@ -820,6 +820,7 @@ __kernel_init(void) {
     break;
 
   case 0x13020000:
+  case 0x13040000:
     KERNEL_ADDRESS_IMAGE_BASE = lstar - 0x000001C0;
     KERNEL_ADDRESS_TARGETID   = KERNEL_ADDRESS_IMAGE_BASE + 0x021CC60D;
     KERNEL_ADDRESS_COPYIN     = KERNEL_ADDRESS_IMAGE_BASE + 0x002BD6E0;
@@ -827,7 +828,7 @@ __kernel_init(void) {
     break;
 
   default:
-    if(fw < 0x13020000) {
+    if(fw < 0x13040000) {
       return -ENOSYS;
     }
 
