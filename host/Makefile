@@ -21,10 +21,10 @@ TOOLCHAINS := toolchain/orbis.sh \
               toolchain/orbis.cmake \
               toolchain/orbis.ini
 
-TOOLS := bin/cmake-bin-wrapper \
-         bin/llvm-bin-wrapper \
-         bin/meson-bin-wrapper \
-         bin/llvm-config \
+TOOLS := bin/orbis-cmake \
+         bin/orbis-llvm-wrapper \
+         bin/orbis-meson \
+         bin/orbis-llvm-config \
          bin/orbis-clang \
          bin/orbis-clang++ \
          bin/orbis-deploy \
@@ -63,17 +63,15 @@ install-tools: $(TOOLS)
 	install $^ $(DESTDIR)/bin
 
 install-symlinks:
-	ln -sf llvm-bin-wrapper $(DESTDIR)/bin/llvm-ar
-	ln -sf llvm-bin-wrapper $(DESTDIR)/bin/llvm-nm
-	ln -sf llvm-bin-wrapper $(DESTDIR)/bin/llvm-objcopy
-	ln -sf llvm-bin-wrapper $(DESTDIR)/bin/llvm-ranlib
-	ln -sf llvm-bin-wrapper $(DESTDIR)/bin/llvm-strip
-	ln -sf llvm-bin-wrapper $(DESTDIR)/bin/clang
-	ln -sf llvm-bin-wrapper $(DESTDIR)/bin/clang++
-	ln -sf llvm-bin-wrapper $(DESTDIR)/bin/clang-cpp
-	ln -sf llvm-bin-wrapper $(DESTDIR)/bin/ld.lld
-	ln -sf cmake-bin-wrapper $(DESTDIR)/bin/orbis-cmake
-	ln -sf meson-bin-wrapper $(DESTDIR)/bin/orbis-meson
+	ln -sf orbis-llvm-wrapper $(DESTDIR)/bin/llvm-ar
+	ln -sf orbis-llvm-wrapper $(DESTDIR)/bin/llvm-nm
+	ln -sf orbis-llvm-wrapper $(DESTDIR)/bin/llvm-objcopy
+	ln -sf orbis-llvm-wrapper $(DESTDIR)/bin/llvm-ranlib
+	ln -sf orbis-llvm-wrapper $(DESTDIR)/bin/llvm-strip
+	ln -sf orbis-llvm-wrapper $(DESTDIR)/bin/clang
+	ln -sf orbis-llvm-wrapper $(DESTDIR)/bin/clang++
+	ln -sf orbis-llvm-wrapper $(DESTDIR)/bin/clang-cpp
+	ln -sf orbis-llvm-wrapper $(DESTDIR)/bin/ld.lld
 	ln -sf llvm-ar $(DESTDIR)/bin/orbis-ar
 	ln -sf llvm-nm $(DESTDIR)/bin/orbis-nm
 	ln -sf llvm-objcopy $(DESTDIR)/bin/orbis-objcopy

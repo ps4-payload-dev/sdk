@@ -36,7 +36,7 @@ for ARG in "$@"; do
     fi
 done
 
-LLVM_BINDIR=$("${SCRIPT_DIR}/llvm-config" --bindir)
+LLVM_BINDIR=$("${SCRIPT_DIR}/orbis-llvm-config" --bindir)
 BIN_PATH="${LLVM_BINDIR}/ld.lld"
 exec "${BIN_PATH}" "$@" \
      -m elf_x86_64 $PIE $LDSCRIPT --eh-frame-hdr \

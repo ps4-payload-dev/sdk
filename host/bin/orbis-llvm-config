@@ -31,7 +31,8 @@ CANDIDATES=("llvm-config-21"
 	    "llvm-config-18"
             "llvm-config-17"
             "llvm-config-16"
-            "llvm-config-15")
+            "llvm-config-15"
+            "llvm-config")
 
 for CMD in "${CANDIDATES[@]}"; do
     if [ -x "$(command -v "${CMD}")" ]; then
