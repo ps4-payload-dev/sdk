@@ -22,7 +22,7 @@ TOOLCHAINS := toolchain/orbis.sh \
               toolchain/orbis.ini
 
 TOOLS := bin/orbis-cmake \
-         bin/orbis-llvm-wrapper \
+         bin/orbis-llvm \
          bin/orbis-meson \
          bin/orbis-llvm-config \
          bin/orbis-clang \
@@ -63,15 +63,15 @@ install-tools: $(TOOLS)
 	install $^ $(DESTDIR)/bin
 
 install-symlinks:
-	ln -sf orbis-llvm-wrapper $(DESTDIR)/bin/llvm-ar
-	ln -sf orbis-llvm-wrapper $(DESTDIR)/bin/llvm-nm
-	ln -sf orbis-llvm-wrapper $(DESTDIR)/bin/llvm-objcopy
-	ln -sf orbis-llvm-wrapper $(DESTDIR)/bin/llvm-ranlib
-	ln -sf orbis-llvm-wrapper $(DESTDIR)/bin/llvm-strip
-	ln -sf orbis-llvm-wrapper $(DESTDIR)/bin/clang
-	ln -sf orbis-llvm-wrapper $(DESTDIR)/bin/clang++
-	ln -sf orbis-llvm-wrapper $(DESTDIR)/bin/clang-cpp
-	ln -sf orbis-llvm-wrapper $(DESTDIR)/bin/ld.lld
+	ln -sf orbis-llvm $(DESTDIR)/bin/llvm-ar
+	ln -sf orbis-llvm $(DESTDIR)/bin/llvm-nm
+	ln -sf orbis-llvm $(DESTDIR)/bin/llvm-objcopy
+	ln -sf orbis-llvm $(DESTDIR)/bin/llvm-ranlib
+	ln -sf orbis-llvm $(DESTDIR)/bin/llvm-strip
+	ln -sf orbis-llvm $(DESTDIR)/bin/clang
+	ln -sf orbis-llvm $(DESTDIR)/bin/clang++
+	ln -sf orbis-llvm $(DESTDIR)/bin/clang-cpp
+	ln -sf orbis-llvm $(DESTDIR)/bin/ld.lld
 	ln -sf llvm-ar $(DESTDIR)/bin/orbis-ar
 	ln -sf llvm-nm $(DESTDIR)/bin/orbis-nm
 	ln -sf llvm-objcopy $(DESTDIR)/bin/orbis-objcopy
