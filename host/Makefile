@@ -37,14 +37,6 @@ LDSCRIPTS := elf_x86_64.x
 
 .PHONY: all clean install
 
-all: bin/orbis-nid
-
-clean:
-	rm -f bin/orbis-nid
-
-bin/orbis-nid: bin/orbis-nid.c
-	$(CC) -o $@ $<
-
 install: install-tools install-symlinks install-ldscripts install-toolchains
 
 install-ldscripts: $(LDSCRIPTS)
