@@ -90,19 +90,19 @@ typedef struct dynlib_obj {
   unsigned long unknown1size;
 
   unsigned long vaddrbase;
-  unsigned long unknown2;
+  unsigned long relocbase;
   unsigned long entry;
 
   unsigned int tlsindex;
   unsigned long tlsinit;
   unsigned long tlsinitsize;
   unsigned long tlssize;
-  unsigned long  tlsoffset;
+  unsigned long tlsoffset;
   unsigned long tlsalign;
 
   unsigned long pltgot;
 
-  unsigned long unknown3[6];
+  unsigned long unknown2[7];
 
   unsigned long init;
   unsigned long fini;
@@ -116,9 +116,10 @@ typedef struct dynlib_obj {
   int status;
   int flags;
 
-  unsigned long unknown4[5];
+  unsigned long unknown5[5];
+
   unsigned long dynsec;
-  unsigned long unknown5[6]; //fingerprint?
+  unsigned long unknown6[6]; //fingerprint?
 } dynlib_obj_t;
 
 
