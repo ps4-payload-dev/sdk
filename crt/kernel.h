@@ -157,4 +157,6 @@ int           kernel_set_proc_jaildir(int pid, unsigned long vnode);
 unsigned long kernel_get_proc_currdir(int pid);
 int           kernel_set_proc_currdir(int pid, unsigned long vnode);
 
+unsigned long kernel_dynlib_dlsym(int pid, unsigned int handle, const char *sym);
+
 int __kernel_init(void);

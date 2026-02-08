@@ -163,19 +163,35 @@ sprx_find_file(const char *name, char* path) {
 
 static void*
 sprx_dlsym(const char* symname) {
-  void* p = 0;
+  unsigned long addr;
 
-  if(!DYNLIB_DLSYM(g_libkernel_handle, symname, &p)) {
-    return p;
+  // try with dlsym syscall first
+  if(!DYNLIB_DLSYM(g_libkernel_handle, symname, &addr)) {
+    return (void*)addr;
   }
 
-  if(!DYNLIB_DLSYM(0x2, symname, &p)) {
-    return p;
+  if(!DYNLIB_DLSYM(0x2, symname, &addr)) {
+    return (void*)addr;
   }
 
   for(int i=0; i<g_nb_handles; i++) {
-    if(!DYNLIB_DLSYM(g_handles[i], symname, &p)) {
-      return p;
+    if(!DYNLIB_DLSYM(g_handles[i], symname, &addr)) {
+      return (void*)addr;
+    }
+  }
+
+  // some symbols are blocked by the dlsym syscall, try resolving
+  // it by peeking at the symtab in kernel space
+  if((addr=kernel_dynlib_dlsym(-1, g_libkernel_handle, symname))) {
+    return (void*)addr;
+  }
+  if((addr=kernel_dynlib_dlsym(-1, 0x2, symname))) {
+    return (void*)addr;
+  }
+
+  for(int i=0; i<g_nb_handles; i++) {
+    if((addr=kernel_dynlib_dlsym(-1, g_handles[i], symname))) {
+      return (void*)addr;
     }
   }
 
