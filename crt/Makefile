@@ -37,7 +37,7 @@ CFLAGS += -target x86_64-scei-ps4 -fno-plt -fno-stack-protector
 CFLAGS += -fvisibility-nodllstorageclass=default -Wall -Werror
 CFLAGS += -O1
 
-OBJ := crt.o klog.o kernel.o rtld.o mdbg.o
+OBJ := crt.o klog.o kernel.o rtld.o mdbg.o nid.o
 
 .PHONY: all clean install
 

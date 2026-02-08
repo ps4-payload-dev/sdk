@@ -53,8 +53,13 @@ intptr_t kernel_get_proc(pid_t pid);
 intptr_t kernel_get_proc_ucred(pid_t pid);
 intptr_t kernel_get_proc_filedesc(pid_t pid);
 
+int      kernel_dynlib_handle(pid_t pid, const char* basename, uint32_t *handle);
+intptr_t kernel_dynlib_dlsym(pid_t pid, uint32_t handle, const char *sym);
+intptr_t kernel_dynlib_resolve(pid_t pid, uint32_t handle, const char *nid);
 intptr_t kernel_dynlib_mapbase_addr(pid_t pid, uint32_t handle);
 intptr_t kernel_dynlib_entry_addr(pid_t pid, uint32_t handle);
+intptr_t kernel_dynlib_init_addr(pid_t pid, uint32_t handle);
+intptr_t kernel_dynlib_fini_addr(pid_t pid, uint32_t handle);
 
 int32_t kernel_set_ucred_uid(pid_t pid, uid_t uid);
 int32_t kernel_set_ucred_ruid(pid_t pid, uid_t ruid);

@@ -18,8 +18,10 @@ along with this program; see the file COPYING. If not, see
 
 #define SYS_kexec        11
 #define SYS_getpid       20
+#define SYS_munmap       73
 #define SYS_stat         188
 #define SYS_sysctl       202
+#define SYS_mmap         477
 #define SYS_mdbg_call    573
 #define SYS_dynlib_dlsym 591
 #define SYS_dynlib_load  594

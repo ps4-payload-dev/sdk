@@ -15,6 +15,7 @@ along with this program; see the file COPYING. If not, see
 <http://www.gnu.org/licenses/>.  */
 
 #include "kernel.h"
+#include "nid.h"
 #include "syscall.h"
 
 
@@ -23,9 +24,17 @@ along with this program; see the file COPYING. If not, see
  **/
 #define X86_CR0_WP (1 << 16)
 #define MSR_LSTAR  0xC0000082
+
 #define EFAULT     14
 #define EINVAL     22
 #define ENOSYS     78
+
+#define MAP_ANONYMOUS 0x1000
+#define MAP_PRIVATE   0x02
+#define MAP_FAILED    ((void*)-1)
+
+#define PROT_READ  1
+#define PROT_WRITE 2
 
 
 /**
@@ -95,6 +104,16 @@ typedef struct {
 } Elf64_Phdr;
 
 
+typedef struct {
+  unsigned int   st_name;
+  unsigned char  st_info;
+  unsigned char  st_other;
+  unsigned short st_shndx;
+  unsigned long  st_value;
+  unsigned long  st_size;
+} Elf64_Sym;
+
+
 /**
  * Public constants.
  **/
@@ -131,7 +150,7 @@ const unsigned long KERNEL_OFFSET_FILEDESC_FD_JDIR = 0x20;
 
 
 /**
- * Compare memory areas.
+ * we need memcmp() before we can resolve symbols.
  **/
 static int
 memcmp(const unsigned char* dst, const unsigned char* src, unsigned long len) {
@@ -141,6 +160,44 @@ memcmp(const unsigned char* dst, const unsigned char* src, unsigned long len) {
     }
   }
   return 0;
+}
+
+
+/**
+ * we need strcmp() before we can resolve symbols.
+ **/
+static int
+strncmp(const char *s1, const char *s2, unsigned long n) {
+  if(n == 0) {
+    return 0;
+  }
+
+  do {
+    if(*s1 != *s2++) {
+      return (*(const unsigned char *)s1 -
+              *(const unsigned char *)(s2 - 1));
+    }
+    if(*s1++ == '\0') {
+      break;
+    }
+  } while (--n != 0);
+
+  return 0;
+}
+
+
+/**
+ * we need strlen() before we can resolve symbols.
+ **/
+static unsigned long
+strlen(const char *str) {
+  const char *start = str;
+
+  while(*str) {
+    str++;
+  }
+
+  return str - start;
 }
 
 
@@ -1132,6 +1189,112 @@ kernel_dynlib_obj(int pid, unsigned int handle, dynlib_obj_t* obj) {
   return 0;
 }
 
+
+int
+kernel_dynlib_find_handle(int pid, unsigned long addr, unsigned int* handle) {
+  unsigned long mapbase;
+  unsigned long mapsize;
+  unsigned long kproc;
+  unsigned long kaddr;
+  unsigned long h;
+
+  if(!(kproc=kernel_get_proc(pid))) {
+    return -1;
+  }
+
+  if(kernel_copyout(kproc + 0x340, &kaddr, sizeof(kaddr)) < 0) {
+    return -1;
+  }
+
+  while(1) {
+    if(kernel_copyout(kaddr, &kaddr, sizeof(kaddr)) < 0) {
+      return -1;
+    }
+    if(!kaddr) {
+      return -1;
+    }
+
+    if(kernel_copyout(kaddr + __builtin_offsetof(dynlib_obj_t, mapbase),
+		      &mapbase, sizeof(mapbase)) < 0) {
+      return -1;
+    }
+
+    if(kernel_copyout(kaddr + __builtin_offsetof(dynlib_obj_t, mapsize),
+		      &mapsize, sizeof(mapsize)) < 0) {
+      return -1;
+    }
+
+    if(mapbase <= addr && addr <= mapbase + mapsize) {
+      if(kernel_copyout(kaddr + __builtin_offsetof(dynlib_obj_t, handle),
+                        &h, sizeof(h)) < 0) {
+        return -1;
+      }
+      *handle = (unsigned int)h;
+      return 0;
+    }
+  }
+
+  return -1;
+}
+
+
+int
+kernel_dynlib_handle(int pid, const char* basename, unsigned int *handle) {
+  unsigned long kproc;
+  unsigned long kaddr;
+  unsigned long kpath;
+  unsigned long blen;
+  unsigned long plen;
+  char path[1024];
+  long temphandle;
+
+  if(!(kproc=kernel_get_proc(pid))) {
+    return -1;
+  }
+
+  if(kernel_copyout(kproc + 0x340, &kaddr, sizeof(kaddr)) < 0) {
+    return -1;
+  }
+
+  blen = strlen(basename);
+  do {
+    if(kernel_copyout(kaddr, &kaddr, sizeof(kaddr)) < 0) {
+      return -1;
+    }
+    if(!kaddr) {
+      return -1;
+    }
+    if(kernel_copyout(kaddr + __builtin_offsetof(dynlib_obj_t, path),
+		      &kpath, sizeof(kpath)) < 0) {
+      return -1;
+    }
+    if(kernel_copyout(kpath, path, sizeof(path)) < 0) {
+      return -1;
+    }
+
+    if(kernel_copyout(kaddr + __builtin_offsetof(dynlib_obj_t, handle),
+		      &temphandle, sizeof(temphandle)) < 0) {
+      return -1;
+    }
+
+    plen = strlen(path);
+    if(plen <= blen) {
+      continue;
+    }
+    if(path[plen-blen-1] != '/') {
+      continue;
+    }
+    if(strncmp(path + plen - blen, basename, blen)) {
+      continue;
+    }
+
+    *handle = (unsigned int)temphandle;
+    return 0;
+
+  } while(1);
+}
+
+
 unsigned long
 kernel_dynlib_mapbase_addr(int pid, unsigned int handle) {
   dynlib_obj_t obj;
@@ -1153,6 +1316,95 @@ kernel_dynlib_entry_addr(int pid, unsigned int handle) {
   }
 
   return obj.entry;
+}
+
+
+unsigned long
+kernel_dynlib_init_addr(int pid, unsigned int handle) {
+  dynlib_obj_t obj;
+
+  if(kernel_dynlib_obj(pid, handle, &obj)) {
+    return 0;
+  }
+
+  return obj.init;
+}
+
+
+unsigned long
+kernel_dynlib_fini_addr(int pid, unsigned int handle) {
+  dynlib_obj_t obj;
+
+  if(kernel_dynlib_obj(pid, handle, &obj)) {
+    return 0;
+  }
+
+  return obj.fini;
+}
+
+
+unsigned long
+kernel_dynlib_resolve(int pid, int handle, const char *nid) {
+  unsigned long vaddr = 0;
+  dynlib_dynsec_t dynsec;
+  dynlib_obj_t obj;
+  Elf64_Sym* sym;
+  char* buf_start;
+  long buf_size;
+  char* strtab;
+  char* symtab;
+
+  if(kernel_dynlib_obj(pid, handle, &obj)) {
+    return 0;
+  }
+  if(kernel_copyout(obj.dynsec, &dynsec, sizeof(dynsec)) < 0) {
+    return 0;
+  }
+
+  buf_size = dynsec.symtabsize + dynsec.strtabsize;
+  if((buf_start=(char*)__syscall(SYS_mmap, 0l, buf_size,
+				 PROT_READ | PROT_WRITE,
+				 MAP_ANONYMOUS | MAP_PRIVATE,
+				 -1, 0l)) == MAP_FAILED) {
+    return 0;
+  }
+
+  symtab = buf_start;
+  strtab = buf_start + dynsec.symtabsize;
+
+  if(kernel_copyout(dynsec.symtab, symtab, dynsec.symtabsize) < 0) {
+    __syscall(SYS_munmap, buf_start, buf_size);
+    return 0;
+  }
+  if(kernel_copyout(dynsec.strtab, strtab, dynsec.strtabsize) < 0) {
+    __syscall(SYS_munmap, buf_start, buf_size);
+    return 0;
+  }
+
+  for(unsigned long i=0; i<dynsec.symtabsize/sizeof(Elf64_Sym); i++) {
+    sym = (Elf64_Sym*)(symtab + sizeof(Elf64_Sym)*i);
+    if(!sym->st_value) {
+      continue;
+    }
+    if(!strncmp(nid, strtab + sym->st_name, 11)) {
+      vaddr = obj.mapbase + sym->st_value;
+      break;
+    }
+  }
+
+  __syscall(SYS_munmap, buf_start, buf_size);
+
+  return vaddr;
+}
+
+
+unsigned long
+kernel_dynlib_dlsym(int pid, unsigned int handle, const char* sym) {
+  char nid[12];
+
+  nid_encode(sym, nid);
+
+  return kernel_dynlib_resolve(pid, handle, nid);
 }
 
 
