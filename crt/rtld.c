@@ -112,6 +112,8 @@ static struct sysmodtab {
   unsigned int handle;
 } sysmodtab[] = {
   {"libSceNet.sprx", 0x8000001c},
+  {"libSceHttp2.sprx", 0x8000008c},
+  {"libSceSsl.sprx", 0x8000000b},
   {"libSceSystemService.sprx", 0x80000010},
   {"libSceUserService.sprx", 0x80000011},
 };
