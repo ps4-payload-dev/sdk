@@ -100,6 +100,8 @@ static void* (*memcpy)(void*, const void*, unsigned long) = 0;
 static int   (*strcmp)(const char*, const char*) = 0;
 static int   (*sprintf)(char*, const char*, ...) = 0;
 static int   (*sceSysmoduleLoadModuleInternal)(unsigned int) = 0;
+static int   (*sceKernelLoadStartModule)(const char*, unsigned long, const void*,
+					 unsigned int, void*, int*) = 0;
 
 
 /**
@@ -201,7 +203,6 @@ sprx_dlsym(const char* symname) {
 
 static unsigned int
 sprx_open(const char* libname) {
-  unsigned int handle;
   char path[1024];
 
   if(!strcmp(libname, "libkernel.sprx") ||
@@ -226,11 +227,7 @@ sprx_open(const char* libname) {
     }
   }
 
-  if(!DYNLIB_LOAD(path, &handle)) {
-    return handle;
-  }
-  
-  return 0;
+  return sceKernelLoadStartModule(path, 0, 0, 0, 0, 0);
 }
 
 
@@ -443,6 +440,11 @@ __rtld_init(void) {
   } else {
     klog_puts("unable to determine libkernel handle");
     return -1;
+  }
+  if((err=DYNLIB_DLSYM(g_libkernel_handle, "sceKernelLoadStartModule",
+		       &sceKernelLoadStartModule))) {
+    klog_resolve_error("sceKernelLoadStartModule");
+    return err;
   }
 
   if((err=DYNLIB_DLSYM(0x2, "memcpy", &memcpy))) {
