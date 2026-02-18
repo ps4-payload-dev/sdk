@@ -24,19 +24,22 @@ INTERACTIVE=""
 
 show_help() {
     cat <<EOF
-Usage: $(basename "$0") -h HOST -p PORT [-i] PAYLOAD_PATH
+Usage: $(basename "$0") -h HOST [-p PORT] [-i] PAYLOAD_PATH_OR_URI
 
 Options:
-  -h HOST        Set the host address
-  -p PORT        Set the port number
+  -h HOST        Set the host address (defaults to \$PS4_HOST)
+  -p PORT        Set the port (defaults to \$PS4_PORT if set, else 9021)
   -i             Enable interactive mode (append /dev/stdin to payload)
   -H, --help     Show this help message and exit
 
 Arguments:
-  PAYLOAD_PATH   Path to the payload
+  PAYLOAD_PATH   Path or URI to the payload
 EOF
 }
 
+if [ -z "$PORT" ]; then
+    PORT=9021
+fi
 
 for arg in "$@"; do
     case "$arg" in
@@ -59,13 +62,22 @@ shift $((OPTIND -1))
 
 
 if [[ -z $HOST || -z $PORT || -z $1 ]]; then
-    echo "Usage: $(basename $0) -h HOST -p PORT PAYLOAD_PATH" >&2
+    echo "Usage: $(basename $0) -h HOST [-p PORT] [-i] PAYLOAD_PATH" >&2
     exit 1
 fi
 
 
 if [[ -z $INTERACTIVE ]]; then
-    socat -t 9999999 - TCP:$HOST:$PORT < $1
+    if [ -e "$1" ]; then
+	socat -t 9999999 - TCP:$HOST:$PORT < $1
+    else
+	echo "$1" | socat -t 9999999 - TCP:$HOST:$PORT
+    fi
 else
-    { cat $1 && cat /dev/stdin; } | socat - TCP:$HOST:$PORT
+    if [ -e "$1" ]; then
+	{ cat "$1" && cat /dev/stdin; } | socat - TCP:$HOST:$PORT
+    else
+	{ echo "$1" && cat /dev/stdin; } | socat - TCP:$HOST:$PORT
+    fi
 fi
+
