@@ -18,7 +18,7 @@ MAKE    ?= make
 DESTDIR ?= /opt/ps4-payload-sdk
 
 TOPTARGETS := all clean install
-SUBDIRS    := crt include libc sce_stubs host
+SUBDIRS    := crt include libc libufs sce_stubs host
 
 .PHONY: $(TOPTARGETS) $(SUBDIRS) install
 
