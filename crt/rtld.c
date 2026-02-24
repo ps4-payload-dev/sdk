@@ -111,6 +111,7 @@ static struct sysmodtab {
   const char* name;
   unsigned int handle;
 } sysmodtab[] = {
+  {"libSceAppInstUtil.sprx", 0x80000014},
   {"libSceNet.sprx", 0x8000001c},
   {"libSceHttp2.sprx", 0x8000008c},
   {"libSceSsl.sprx", 0x8000000b},
