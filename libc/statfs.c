@@ -17,7 +17,9 @@ along with this program; see the file COPYING. If not, see
 #include <errno.h>
 #include <unistd.h>
 
+#include <sys/mount.h>
 #include <sys/syscall.h>
+
 
 int
 statfs(const char *path, struct statfs *buf) {
