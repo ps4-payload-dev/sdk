@@ -318,6 +318,7 @@ typedef	__useconds_t	useconds_t;
 
 __BEGIN_DECLS
 /* 1003.1-1990 */
+int fdatasync(int);
 void	 _exit(int) __dead2;
 int	 access(const char *, int);
 unsigned int	 alarm(unsigned int);
