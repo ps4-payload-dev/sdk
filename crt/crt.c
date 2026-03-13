@@ -16,6 +16,7 @@ along with this program; see the file COPYING. If not, see
 
 #include "kernel.h"
 #include "klog.h"
+#include "patch.h"
 #include "rtld.h"
 #include "syscall.h"
 
@@ -77,6 +78,9 @@ payload_init(void) {
     return err;
   }
   if((err=__rtld_init())) {
+    return err;
+  }
+  if((err=__patch_init())) {
     return err;
   }
 

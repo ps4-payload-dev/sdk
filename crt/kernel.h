@@ -126,6 +126,8 @@ typedef struct dynlib_obj {
 extern unsigned long KERNEL_ADDRESS_ROOTVNODE;
 extern unsigned long KERNEL_ADDRESS_PRISON0;
 
+extern unsigned long KERNEL_ADDRESS_IMAGE_BASE;
+extern unsigned long KERNEL_IMAGE_SIZE;
 
 int kernel_copyout(unsigned long kaddr, void *uaddr, unsigned long len);
 int kernel_copyin(const void *uaddr, unsigned long kaddr, unsigned long len);
@@ -158,5 +160,10 @@ unsigned long kernel_get_proc_currdir(int pid);
 int           kernel_set_proc_currdir(int pid, unsigned long vnode);
 
 unsigned long kernel_dynlib_dlsym(int pid, unsigned int handle, const char *sym);
+
+unsigned long kernel_find_pattern(unsigned long addr, unsigned int len,
+				  const char* pattern);
+int kernel_patch(unsigned long addr, const void* before, const void* after,
+		 unsigned short size);
 
 int __kernel_init(void);
