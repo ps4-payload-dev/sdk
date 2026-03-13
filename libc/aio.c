@@ -25,12 +25,12 @@ int
 aio_read(struct aiocb *iocb) {
   int err;
 
-  if((err=syscall(SYS_aio_read, iocb))) {
+  if((err=syscall(SYS_aio_read, iocb)) < 0) {
     errno = -err;
     return -1;
   }
 
-  return 0;
+  return err;
 }
 
 
@@ -38,12 +38,12 @@ int
 aio_write(struct aiocb *iocb) {
   int err;
 
-  if((err=syscall(SYS_aio_write, iocb))) {
+  if((err=syscall(SYS_aio_write, iocb)) < 0) {
     errno = -err;
     return -1;
   }
 
-  return 0;
+  return err;
 }
 
 
@@ -52,12 +52,12 @@ lio_listio(int mode, struct aiocb * const list[], int nent,
 	   struct sigevent *sig) {
   int err;
 
-  if((err=syscall(SYS_lio_listio, mode, list, nent, sig))) {
+  if((err=syscall(SYS_lio_listio, mode, list, nent, sig)) < 0) {
     errno = -err;
     return -1;
   }
 
-  return 0;
+  return err;
 }
 
 
@@ -65,12 +65,12 @@ int
 aio_error(const struct aiocb *iocb) {
   int err;
 
-  if((err=syscall(SYS_aio_error, iocb))) {
+  if((err=syscall(SYS_aio_error, iocb)) < 0) {
     errno = -err;
     return -1;
   }
 
-  return 0;
+  return err;
 }
 
 
@@ -78,12 +78,12 @@ ssize_t
 aio_return(struct aiocb *iocb) {
   int err;
 
-  if((err=syscall(SYS_aio_return, iocb))) {
+  if((err=syscall(SYS_aio_return, iocb)) < 0) {
     errno = -err;
     return -1;
   }
 
-  return 0;
+  return err;
 }
 
 
@@ -91,12 +91,12 @@ int
 aio_cancel(int fildes, struct aiocb *iocb) {
   int err;
 
-  if((err=syscall(SYS_aio_cancel, fildes, iocb))) {
+  if((err=syscall(SYS_aio_cancel, fildes, iocb)) < 0) {
     errno = -err;
     return -1;
   }
 
-  return 0;
+  return err;
 }
 
 
@@ -105,12 +105,12 @@ aio_suspend(const struct aiocb * const iocbs[], int niocb,
 	    const struct timespec *ts) {
   int err;
 
-  if((err=syscall(SYS_aio_suspend, iocbs, niocb, ts))) {
+  if((err=syscall(SYS_aio_suspend, iocbs, niocb, ts)) < 0) {
     errno = -err;
     return -1;
   }
 
-  return 0;
+  return err;
 }
 
 
@@ -118,10 +118,10 @@ int
 aio_waitcomplete(struct aiocb **aiocb, struct timespec *ts) {
   int err;
 
-  if((err=syscall(SYS_aio_waitcomplete, aiocb, ts))) {
+  if((err=syscall(SYS_aio_waitcomplete, aiocb, ts)) < 0) {
     errno = -err;
     return -1;
   }
 
-  return 0;
+  return err;
 }
