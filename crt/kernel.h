@@ -129,6 +129,8 @@ extern unsigned long KERNEL_ADDRESS_PRISON0;
 extern unsigned long KERNEL_ADDRESS_IMAGE_BASE;
 extern unsigned long KERNEL_IMAGE_SIZE;
 
+unsigned int kernel_get_fw_version(void);
+
 int kernel_copyout(unsigned long kaddr, void *uaddr, unsigned long len);
 int kernel_copyin(const void *uaddr, unsigned long kaddr, unsigned long len);
 
