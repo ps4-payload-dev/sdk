@@ -19,6 +19,8 @@ along with this program; see the file COPYING. If not, see
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
+#include "dynlib.h"
+
 __BEGIN_DECLS
 
 extern const size_t KERNEL_IMAGE_SIZE;
@@ -53,6 +55,7 @@ intptr_t kernel_get_proc(pid_t pid);
 intptr_t kernel_get_proc_ucred(pid_t pid);
 intptr_t kernel_get_proc_filedesc(pid_t pid);
 
+int      kernel_dynlib_obj(int pid, unsigned int handle, dynlib_obj_t* obj);
 int      kernel_dynlib_handle(pid_t pid, const char* basename, uint32_t *handle);
 intptr_t kernel_dynlib_dlsym(pid_t pid, uint32_t handle, const char *sym);
 intptr_t kernel_dynlib_resolve(pid_t pid, uint32_t handle, const char *nid);

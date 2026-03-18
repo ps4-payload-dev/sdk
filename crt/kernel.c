@@ -1155,7 +1155,7 @@ kernel_get_proc(int pid) {
 }
 
 
-static int
+int
 kernel_dynlib_obj(int pid, unsigned int handle, dynlib_obj_t* obj) {
   unsigned long kproc;
   unsigned long kaddr;
