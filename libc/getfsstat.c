@@ -23,12 +23,12 @@ along with this program; see the file COPYING. If not, see
 
 int
 getfsstat(struct statfs *buf, long bufsize, int mode) {
-  int err;
+  int n;
 
-  if((err=syscall(SYS_getfsstat, buf, bufsize, mode))) {
-    errno = -err;
+  if((n=syscall(SYS_getfsstat, buf, bufsize, mode)) < 0) {
+    errno = -n;
     return -1;
   }
 
-  return 0;
+  return n;
 }
