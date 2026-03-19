@@ -383,6 +383,10 @@ patch_mmap(void) {
 }
 
 
+/**
+ * Apply some patches to the kernel that are useful for certain payloads
+ * but not critical for the crt to work properly.
+ **/
 int
 __patch_init(void) {
   return patch_mmap();

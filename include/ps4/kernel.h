@@ -23,7 +23,7 @@ __BEGIN_DECLS
 
 
 /**
- * Data structured used by the kernel to keep track of information related to
+ * Data structure used by the kernel to keep track of information related to
  * SELFs and SPRX files loaded into memory.
  **/
 typedef struct dynlib_obj {
