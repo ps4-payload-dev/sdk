@@ -19,9 +19,63 @@ along with this program; see the file COPYING. If not, see
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
-#include "dynlib.h"
-
 __BEGIN_DECLS
+
+
+/**
+ * Data structured used by the kernel to keep track of information related to
+ * SELFs and SPRX files loaded into memory.
+ **/
+typedef struct dynlib_obj {
+  uintptr_t next;
+  uintptr_t path;
+  uint64_t unknown0[2];
+  uint32_t refcount;
+  uint64_t handle;
+
+  uintptr_t mapbase;
+  uintptr_t mapsize;
+  uintptr_t textsize;
+
+  uintptr_t database;
+  size_t datasize;
+
+  uint64_t unknown1;
+  uint64_t unknown1size;
+
+  uintptr_t vaddrbase;
+  uintptr_t relocbase;
+  uintptr_t entry;
+
+  uint32_t tlsindex;
+  uintptr_t tlsinit;
+  uintptr_t tlsinitsize;
+  size_t tlssize;
+  uint64_t tlsoffset;
+  uint64_t tlsalign;
+
+  uintptr_t pltgot;
+
+  uint64_t unknown2[7];
+
+  uintptr_t init;
+  uintptr_t fini;
+
+  uintptr_t eh_frame_hdr;
+  size_t eh_frame_hdr_size;
+
+  uintptr_t eh_frame;
+  size_t eh_frame_size;
+
+  int32_t status;
+  int32_t flags;
+
+  uint64_t unknown5[5];
+
+  uintptr_t dynsec;
+  uint64_t unknown6[6]; //fingerprint?
+} dynlib_obj_t;
+
 
 extern const size_t KERNEL_IMAGE_SIZE;
 
