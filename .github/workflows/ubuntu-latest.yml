@@ -53,10 +53,20 @@ jobs:
         $MAKE -C samples/kdump
         $MAKE -C samples/mntinfo
         $MAKE -C samples/ps
-        $CMAKE -S samples/hello_cmake -B samples/hello_cmake/build
-        $CMAKE --build samples/hello_cmake/build
-        $MESON setup samples/hello_meson samples/hello_meson/build
-        $MESON compile -C samples/hello_meson/build
+      env:
+          PS4_PAYLOAD_SDK: ${{ runner.tool_cache }}/ps4-payload-sdk
+
+    - name: Build meson samples
+      run: |
+        $PS4_PAYLOAD_SDK/bin/orbis-meson setup samples/hello_meson samples/hello_meson/build
+        $PS4_PAYLOAD_SDK/bin/orbis-meson compile -C samples/hello_meson/build
+      env:
+          PS4_PAYLOAD_SDK: ${{ runner.tool_cache }}/ps4-payload-sdk
+
+    - name: Build cmake samples
+      run: |
+        $PS4_PAYLOAD_SDK/bin/orbis-cmake -S samples/hello_cmake -B samples/hello_cmake/build
+        $PS4_PAYLOAD_SDK/bin/orbis-cmake --build samples/hello_cmake/build
       env:
           PS4_PAYLOAD_SDK: ${{ runner.tool_cache }}/ps4-payload-sdk
 
