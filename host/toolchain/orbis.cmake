@@ -63,5 +63,7 @@ set(CMAKE_AR ${PS4_PAYLOAD_SDK}/bin/orbis-ar CACHE PATH "")
 set(CMAKE_STRIP ${PS4_PAYLOAD_SDK}/bin/orbis-strip CACHE PATH "")
 set(CMAKE_RANLIB ${PS4_PAYLOAD_SDK}/bin/orbis-ranlib CACHE PATH "")
 
+set(PS4_DEPLOY ${PS4_PAYLOAD_SDK}/bin/orbis-deploy CACHE PATH "")
+
 set(PKG_CONFIG_EXECUTABLE ${PS4_PAYLOAD_SDK}/bin/orbis-pkg-config CACHE PATH "")
 set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
