@@ -16,10 +16,6 @@
 
 cmake_minimum_required(VERSION 3.5)
 
-if(NOT DEFINED ENV{PS4_PAYLOAD_SDK})
-    message(FATAL_ERROR "PS4_PAYLOAD_SDK is undefined")
-endif()
-
 project(hello_cmake C CXX)
 add_executable(hello_c main.c)
 add_executable(hello_cpp main.cpp)
