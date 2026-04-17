@@ -32,7 +32,8 @@ MAKE_SAMPLES=("browser"
 	      "hello_stdio"
 	      "hello_world"
 	      "kdump"
-	      "ps")
+	      "ps"
+	      "relocatable_linking")
 
 CMAKE_SAMPLES=("hello_cmake"
 	      )
