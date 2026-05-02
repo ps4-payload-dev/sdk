@@ -131,6 +131,8 @@ unsigned long KERNEL_ADDRESS_COPYOUT    = 0;
 const unsigned long KERNEL_OFFSET_PROC_P_UCRED   = 0x40;
 const unsigned long KERNEL_OFFSET_PROC_P_FD      = 0x48;
 const unsigned long KERNEL_OFFSET_PROC_P_PID     = 0xB0;
+const unsigned long KERNEL_OFFSET_PROC_P_VMSPACE = 0x168;
+unsigned long KERNEL_OFFSET_VMSPACE_P_ROOT = 0x120; // different on other firmware
 
 const unsigned long KERNEL_OFFSET_UCRED_CR_UID   = 0x04;
 const unsigned long KERNEL_OFFSET_UCRED_CR_RUID  = 0x08;
@@ -1785,4 +1787,138 @@ kernel_get_qaflags(unsigned char qaflags[16]) {
 int
 kernel_set_qaflags(const unsigned char qaflags[16]) {
   return kernel_copyin(qaflags, KERNEL_ADDRESS_QA_FLAGS, 16);
+}
+
+unsigned long
+kernel_get_vmem_entry(int pid, unsigned long addr) {
+  unsigned long vm_map_entry_addr;
+  unsigned long vmspace_addr;
+  unsigned long proc_addr;
+  unsigned long start;
+  unsigned long end;
+
+  if(!(proc_addr=kernel_get_proc(pid))) {
+    return 0;
+  }
+
+  if(kernel_copyout(proc_addr + KERNEL_OFFSET_PROC_P_VMSPACE,
+                    &vmspace_addr, sizeof(vmspace_addr))) {
+    return 0;
+  }
+
+  if(kernel_copyout(vmspace_addr + KERNEL_OFFSET_VMSPACE_P_ROOT,
+		    &vm_map_entry_addr, sizeof(vm_map_entry_addr))) {
+    return 0;
+  }
+
+  while(vm_map_entry_addr) {
+    if(kernel_copyout(vm_map_entry_addr + 0x20, &start, sizeof(start))) {
+      return 0;
+    }
+    if(kernel_copyout(vm_map_entry_addr + 0x28, &end, sizeof(end))) {
+      return 0;
+    } 
+
+    if(addr < start) {
+      // left
+      if(kernel_copyout(vm_map_entry_addr + 0x10, &vm_map_entry_addr,
+                        sizeof(vm_map_entry_addr))) {
+        return 0;
+      }
+    } else if(addr >= end) {
+      // right
+      if(kernel_copyout(vm_map_entry_addr + 0x18, &vm_map_entry_addr,
+                        sizeof(vm_map_entry_addr))) {
+        return 0;
+      }
+    } else {
+      return vm_map_entry_addr;
+    }
+  }
+
+  return EFAULT;
+}
+
+int
+kernel_get_vmem_protection(int pid, unsigned long addr, unsigned long len) {
+  unsigned long vm_entry;
+  unsigned char vm_prot;
+  unsigned long start;
+  int first = 1;
+  int prot = -1;
+
+  if(!(vm_entry=kernel_get_vmem_entry(pid, addr))) {
+    return -1;
+  }
+
+  while(vm_entry) {
+    if(kernel_copyout(vm_entry + 0x20, &start, sizeof(start))) {
+      return -1;
+    }
+
+    if(start >= addr+len || (start < addr && !first) ) {
+      break;
+    }
+    first = 0;
+    if(kernel_copyout(vm_entry + 0x5c, &vm_prot, sizeof(vm_prot))) {
+      return -1;
+    }
+    if(prot < 0) {
+      prot = vm_prot;
+    } else if((prot & vm_prot) != prot) {
+      return EINVAL;
+    }
+
+    if(kernel_copyout(vm_entry + 0x08, &vm_entry, sizeof(vm_entry))) {
+      return -1;
+    }
+  }
+
+  if(prot < 0) {
+    return EFAULT;
+  }
+
+  return prot;
+}
+
+
+int
+kernel_set_vmem_protection(int pid, unsigned long addr, unsigned long len, int prot) {
+  unsigned char vm_prot = prot;
+  unsigned long vm_entry;
+  unsigned long start;
+  int first = 0;
+
+  if(prot < 0) {
+    return EINVAL;
+  }
+  if(!(vm_entry=kernel_get_vmem_entry(pid, addr))) {
+    return -1;
+  }
+
+  while(vm_entry) {
+    if(kernel_copyout(vm_entry + 0x20, &start, sizeof(start))) {
+      return -1;
+    }
+
+    if(start >= addr+len || (start < addr && !first) ) {
+      break;
+    }
+    first = 0;
+
+    if(kernel_copyin(&vm_prot, vm_entry + 0x5c, sizeof(vm_prot))) {
+      return -1;
+    }
+
+    if(kernel_copyout(vm_entry + 0x08, &vm_entry, sizeof(vm_entry))) {
+      return -1;
+    }
+  }
+
+  return 0;
+}
+
+int
+kernel_mprotect(int pid, unsigned long addr, unsigned long len, int prot) {
+  return kernel_set_vmem_protection(pid, addr, len, prot);
 }
