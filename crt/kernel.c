@@ -966,8 +966,17 @@ __kernel_init(void) {
     KERNEL_OFFSET_VMSPACE_P_ROOT = 0; // TODO
     break;
 
+  case 0x13520000:
+    KERNEL_ADDRESS_IMAGE_BASE = lstar - 0x000001C0;
+    KERNEL_ADDRESS_TARGETID   = KERNEL_ADDRESS_IMAGE_BASE + 0x021CC60D;
+    KERNEL_ADDRESS_COPYIN     = KERNEL_ADDRESS_IMAGE_BASE + 0x002BD790;
+    KERNEL_ADDRESS_COPYOUT    = KERNEL_ADDRESS_IMAGE_BASE + 0x002BD6A0;
+
+    KERNEL_OFFSET_VMSPACE_P_ROOT = 0; // TODO
+    break;
+
   default:
-    if(fw < 0x13500000) {
+    if(fw < 0x13520000) {
       return -ENOSYS;
     }
 
@@ -1894,7 +1903,7 @@ kernel_get_vmem_entry(int pid, unsigned long addr) {
     }
     if(kernel_copyout(vm_map_entry_addr + 0x28, &end, sizeof(end))) {
       return 0;
-    } 
+    }
 
     if(addr < start) {
       // left
