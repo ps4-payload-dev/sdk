@@ -361,6 +361,11 @@ patch_mmap(void) {
     patch2 = 0x003B3610;
     patch3 = 0x001FC561;
     break;
+  case 0x1400:
+    patch1 = 0x003B38A0;
+    patch2 = 0x003B38C0;
+    patch3 = 0x001FC801;
+    break;
   default:
     klog_printf("Unsupported firmware %x\n", fw);
   }
@@ -396,4 +401,3 @@ int
 __patch_init(void) {
   return patch_mmap();
 }
-
