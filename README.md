@@ -101,6 +101,9 @@ firmware version. Currently, offsets for the following versions are included
 - [ ] 12.50 and 12.52
 - [ ] 13.00
 - [ ] 13.02 and 13.04
+- [ ] 13.50
+- [ ] 13.52
+- [ ] 14.00
 
 Please help confirming untested versions by sending a pull request that updates README.md
 accordingly.
